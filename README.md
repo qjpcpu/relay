@@ -30,3 +30,5 @@ go get github.com/qjpcpu/relay
 ```
 relay
 ```
+
+![snapshot](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot.png)
