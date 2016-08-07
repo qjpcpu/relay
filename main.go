@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type Cmd struct {
@@ -36,6 +37,9 @@ func main() {
 }
 
 func drawUI() {
+	serachMode, query := false, ""
+	origTitle := "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <q/C-c>退出)"
+	searchTitle := "查找主机: "
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -51,7 +55,7 @@ func drawUI() {
 	ls := termui.NewList()
 	ls.Items = strs
 	ls.ItemFgColor = termui.ColorYellow
-	ls.BorderLabel = "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: Enter确认 4: <q/C-c>退出)"
+	ls.BorderLabel = origTitle
 	ls.Height = termui.TermHeight()
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, ls)))
 
@@ -68,13 +72,39 @@ func drawUI() {
 		ls.Items = formatCommands(commands, currentIndex)
 		termui.Render(termui.Body)
 	}
+	doSearch := func() {
+		if query != "" {
+			for i, c := range commands {
+				if strings.Contains(strings.ToLower(c.Name), strings.ToLower(query)) {
+					currentIndex = i
+					break
+				}
+			}
+		}
+		serachMode, query = false, ""
+		ls.BorderLabel = origTitle
+	}
+	appendQuery := func(qs string) {
+		query += qs
+		ls.BorderLabel = searchTitle + query + "    "
+		repaint(0)
+	}
 
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
-		termui.StopLoop()
+		if !serachMode {
+			termui.StopLoop()
+		} else {
+			doSearch()
+			repaint(0)
+		}
 	})
 	termui.Handle("/sys/kbd/q", func(termui.Event) {
-		termui.StopLoop()
-		exitNow = true
+		if !serachMode {
+			termui.StopLoop()
+			exitNow = true
+		} else {
+			appendQuery("q")
+		}
 	})
 	termui.Handle("/sys/kbd/C-c", func(termui.Event) {
 		termui.StopLoop()
@@ -87,13 +117,21 @@ func drawUI() {
 		repaint(1)
 	})
 	termui.Handle("/sys/kbd/j", func(termui.Event) {
-		repaint(1)
+		if !serachMode {
+			repaint(1)
+		} else {
+			appendQuery("j")
+		}
 	})
 	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
 		repaint(-1)
 	})
 	termui.Handle("/sys/kbd/k", func(termui.Event) {
-		repaint(-1)
+		if !serachMode {
+			repaint(-1)
+		} else {
+			appendQuery("k")
+		}
 	})
 	termui.Handle("/sys/kbd/C-d", func(termui.Event) {
 		repaint(10)
@@ -102,13 +140,35 @@ func drawUI() {
 		repaint(-10)
 	})
 	termui.Handle("/sys/kbd/G", func(termui.Event) {
-		repaint(-currentIndex - 1)
+		if !serachMode {
+			repaint(-currentIndex - 1)
+		} else {
+			appendQuery("G")
+		}
 	})
 	termui.Handle("/sys/kbd/g", func(termui.Event) {
-		repaint(-currentIndex)
+		if !serachMode {
+			repaint(-currentIndex)
+		} else {
+			appendQuery("g")
+		}
 	})
 	termui.Handle("/sys/wnd/resize", func(termui.Event) {
 		repaint(0)
+	})
+
+	termui.Handle("/sys/kbd", func(evt termui.Event) {
+		kb, ok := evt.Data.(termui.EvtKbd)
+		if !ok {
+			return
+		}
+		if kb.KeyStr == "/" && !serachMode {
+			serachMode, query = true, ""
+			ls.BorderLabel = searchTitle
+			repaint(0)
+		} else if serachMode {
+			appendQuery(kb.KeyStr)
+		}
 	})
 	termui.Loop()
 }
