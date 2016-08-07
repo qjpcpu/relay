@@ -20,6 +20,7 @@ var configFile string = os.Getenv("HOME") + "/.relay.conf"
 
 var commands []Cmd
 var currentIndex int = 0
+var exitNow bool = false
 
 func main() {
 	commands = loadCommands()
@@ -27,6 +28,14 @@ func main() {
 		fmt.Println("无主机配置")
 		os.Exit(1)
 	}
+	drawUI()
+	if !exitNow {
+		runCommand(commands[currentIndex].Cmd)
+	}
+	os.Exit(0)
+}
+
+func drawUI() {
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -40,15 +49,12 @@ func main() {
 	ls.ItemFgColor = termui.ColorYellow
 	ls.BorderLabel = "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: Enter确认 4: <q/C-c>退出)"
 	ls.Height = 600
-	// build layout
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, ls)))
 
-	// calculate layout
 	termui.Body.Align()
 
 	termui.Render(termui.Body)
 
-	//	termui.Render(ls)
 	repaint := func(offset int) {
 		nIndex := offset + currentIndex
 		if nIndex < 0 {
@@ -59,7 +65,6 @@ func main() {
 		termui.Render(termui.Body)
 	}
 
-	exitNow := false
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
 		termui.StopLoop()
 	})
@@ -99,13 +104,7 @@ func main() {
 		repaint(-currentIndex)
 	})
 	termui.Loop()
-	termui.Close()
-	if !exitNow {
-		runCommand(commands[currentIndex].Cmd)
-	}
-	os.Exit(0)
 }
-
 func formatCommands(commands []Cmd, index int) []string {
 	var strs []string
 	start := index - MaxLine + 1
