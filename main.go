@@ -41,6 +41,10 @@ func drawUI() {
 		panic(err)
 	}
 	defer termui.Close()
+	// set max line
+	if MaxLine < termui.TermHeight()-3 {
+		MaxLine = termui.TermHeight() - 3
+	}
 
 	strs := formatCommands(commands, currentIndex)
 
