@@ -3,6 +3,14 @@ relay
 
 简单ssh登录管理器,安装配置好后直接运行`relay`即可
 
+### 安装
+
+```
+go get github.com/qjpcpu/relay
+```
+
+### 配置
+
 配置文件`~/.relay.conf`是yaml格式:
 
 ```
@@ -15,4 +23,10 @@ relay
 -
  name: 线上服务器2
  cmd: ssh work@online2.example.com
+```
+
+### 运行
+
+```
+relay
 ```
