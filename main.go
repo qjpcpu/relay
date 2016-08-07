@@ -178,7 +178,7 @@ func drawUI() {
 			} else if kb.KeyStr == "<space>" {
 				appendQuery(" ")
 			} else {
-				matched, _ := regexp.MatchString(`<.+>`, kb.KeyStr)
+				matched, _ := regexp.MatchString(`<.+>|C\-`, kb.KeyStr)
 				if !matched {
 					appendQuery(kb.KeyStr)
 				}
