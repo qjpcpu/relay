@@ -38,7 +38,7 @@ func main() {
 	ls := termui.NewList()
 	ls.Items = strs
 	ls.ItemFgColor = termui.ColorYellow
-	ls.BorderLabel = "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k/>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: Enter确认 4: q退出)"
+	ls.BorderLabel = "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: Enter确认 4: q退出)"
 	ls.Height = 600
 	// build layout
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, ls)))
