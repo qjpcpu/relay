@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 )
 
 type Cmd struct {
@@ -167,7 +169,20 @@ func drawUI() {
 			ls.BorderLabel = searchTitle
 			repaint(0)
 		} else if serachMode {
-			appendQuery(kb.KeyStr)
+			if kb.KeyStr == "C-8" {
+				// delete char
+				_, size := utf8.DecodeLastRuneInString(query)
+				query = query[:len(query)-size]
+				ls.BorderLabel = searchTitle + query + "    "
+				repaint(0)
+			} else if kb.KeyStr == "<space>" {
+				appendQuery(" ")
+			} else {
+				matched, _ := regexp.MatchString(`<.+>`, kb.KeyStr)
+				if !matched {
+					appendQuery(kb.KeyStr)
+				}
+			}
 		}
 	})
 	termui.Loop()
