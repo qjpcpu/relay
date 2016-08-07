@@ -48,7 +48,7 @@ func drawUI() {
 	ls.Items = strs
 	ls.ItemFgColor = termui.ColorYellow
 	ls.BorderLabel = "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: Enter确认 4: <q/C-c>退出)"
-	ls.Height = 600
+	ls.Height = termui.TermHeight()
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, ls)))
 
 	termui.Body.Align()
@@ -102,6 +102,9 @@ func drawUI() {
 	})
 	termui.Handle("/sys/kbd/g", func(termui.Event) {
 		repaint(-currentIndex)
+	})
+	termui.Handle("/sys/wnd/resize", func(termui.Event) {
+		repaint(0)
 	})
 	termui.Loop()
 }
