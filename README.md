@@ -1,12 +1,12 @@
 relay
 =====================================
 
-简单ssh登录管理器,安装配置好后直接运行`relay`即可
+简单ssh登录管理器(实际上可作为命令映射器),安装配置好后直接运行`relay`即可
 
 ### 安装
 
 ```
-go get github.com/qjpcpu/relay
+go get -u github.com/qjpcpu/relay
 ```
 
 ### 配置
