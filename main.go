@@ -17,11 +17,56 @@ type Cmd struct {
 	Name string `yaml:"name"`
 }
 
+type SearchObj struct {
+	MatchedIndexList []int
+	SelfIndexInList  int
+	QueryStr         string
+	CommandSize      int
+	SearchTitle      string
+}
+
+func (so *SearchObj) Reset() {
+	so.MatchedIndexList = []int{}
+	so.SelfIndexInList = 0
+	so.QueryStr = ""
+}
+
+func (so *SearchObj) Title() string {
+	if len(so.MatchedIndexList) > 0 {
+		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p导航]", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
+	} else {
+		return fmt.Sprintf("%s%s     ", so.SearchTitle, so.QueryStr)
+	}
+}
+func (so *SearchObj) Next(current int) int {
+	if so.SelfIndexInList >= 0 && so.SelfIndexInList < len(so.MatchedIndexList) {
+		so.SelfIndexInList = (so.SelfIndexInList + 1) % len(so.MatchedIndexList)
+		return so.MatchedIndexList[so.SelfIndexInList] - current
+	}
+	return 0
+}
+
+func (so *SearchObj) Offset(current int) int {
+	if so.SelfIndexInList >= 0 && so.SelfIndexInList < len(so.MatchedIndexList) {
+		return so.MatchedIndexList[so.SelfIndexInList] - current
+	}
+	return 0
+}
+
+func (so *SearchObj) Prev(current int) int {
+	if so.SelfIndexInList >= 0 && so.SelfIndexInList < len(so.MatchedIndexList) {
+		so.SelfIndexInList = (so.SelfIndexInList - 1 + len(so.MatchedIndexList)) % len(so.MatchedIndexList)
+		return so.MatchedIndexList[so.SelfIndexInList] - current
+	}
+	return 0
+}
+
 var MaxLine int = 20
 
 var configFile string = os.Getenv("HOME") + "/.relay.conf"
 
 var commands []Cmd
+var searchObj = &SearchObj{}
 var currentIndex int = 0
 var exitNow bool = false
 
@@ -39,9 +84,10 @@ func main() {
 }
 
 func drawUI() {
-	serachMode, query := false, ""
-	origTitle := "选择登录的主机 Help:(1: <TAB/C-n/C-p/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <q/C-c>退出)"
-	searchTitle := "查找主机: "
+	serachMode := false
+	searchObj.CommandSize = len(commands)
+	searchObj.SearchTitle = "查找主机: "
+	origTitle := "选择登录的主机 Help:(1: <TAB/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <q/C-c>退出)"
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -74,29 +120,34 @@ func drawUI() {
 		ls.Items = formatCommands(commands, currentIndex)
 		termui.Render(termui.Body)
 	}
-	doSearch := func() {
-		if query != "" {
+
+	doSearch := func() int {
+		searchObj.MatchedIndexList = []int{}
+		searchObj.SelfIndexInList = 0
+		if searchObj.QueryStr != "" {
 			for i, c := range commands {
-				if strings.Contains(strings.ToLower(c.Name), strings.ToLower(query)) {
-					currentIndex = i
-					break
+				if strings.Contains(strings.ToLower(c.Name), strings.ToLower(searchObj.QueryStr)) {
+					searchObj.MatchedIndexList = append(searchObj.MatchedIndexList, i)
 				}
 			}
 		}
-		serachMode, query = false, ""
-		ls.BorderLabel = origTitle
+		ls.BorderLabel = searchObj.Title()
+		return searchObj.Offset(currentIndex)
 	}
+
 	appendQuery := func(qs string) {
-		query += qs
-		ls.BorderLabel = searchTitle + query + "    "
-		repaint(0)
+		searchObj.QueryStr += qs
+		repaint(doSearch())
 	}
 
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
-		if !serachMode {
-			termui.StopLoop()
-		} else {
-			doSearch()
+		termui.StopLoop()
+	})
+	termui.Handle("/sys/kbd/<escape>", func(termui.Event) {
+		if serachMode {
+			serachMode = false
+			searchObj.Reset()
+			ls.BorderLabel = origTitle
 			repaint(0)
 		}
 	})
@@ -116,7 +167,13 @@ func drawUI() {
 		repaint(1)
 	})
 	termui.Handle("/sys/kbd/C-n", func(termui.Event) {
-		repaint(1)
+		if serachMode {
+			offset := searchObj.Next(currentIndex)
+			ls.BorderLabel = searchObj.Title()
+			repaint(offset)
+		} else {
+			repaint(1)
+		}
 	})
 	termui.Handle("/sys/kbd/j", func(termui.Event) {
 		if !serachMode {
@@ -126,7 +183,13 @@ func drawUI() {
 		}
 	})
 	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
-		repaint(-1)
+		if serachMode {
+			offset := searchObj.Prev(currentIndex)
+			ls.BorderLabel = searchObj.Title()
+			repaint(offset)
+		} else {
+			repaint(-1)
+		}
 	})
 	termui.Handle("/sys/kbd/k", func(termui.Event) {
 		if !serachMode {
@@ -165,16 +228,16 @@ func drawUI() {
 			return
 		}
 		if kb.KeyStr == "/" && !serachMode {
-			serachMode, query = true, ""
-			ls.BorderLabel = searchTitle
+			serachMode = true
+			searchObj.Reset()
+			ls.BorderLabel = searchObj.Title()
 			repaint(0)
 		} else if serachMode {
 			if kb.KeyStr == "C-8" {
 				// delete char
-				_, size := utf8.DecodeLastRuneInString(query)
-				query = query[:len(query)-size]
-				ls.BorderLabel = searchTitle + query + "    "
-				repaint(0)
+				_, size := utf8.DecodeLastRuneInString(searchObj.QueryStr)
+				searchObj.QueryStr = searchObj.QueryStr[:len(searchObj.QueryStr)-size]
+				repaint(doSearch())
 			} else if kb.KeyStr == "<space>" {
 				appendQuery(" ")
 			} else {
