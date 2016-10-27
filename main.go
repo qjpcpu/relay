@@ -34,9 +34,9 @@ func (so *SearchObj) Reset() {
 
 func (so *SearchObj) Title() string {
 	if len(so.MatchedIndexList) > 0 {
-		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p导航]", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
+		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
 	} else {
-		return fmt.Sprintf("%s%s     ", so.SearchTitle, so.QueryStr)
+		return fmt.Sprintf("%s%s     按ESC退出搜索", so.SearchTitle, so.QueryStr)
 	}
 }
 func (so *SearchObj) Next(current int) int {
@@ -88,7 +88,7 @@ func drawUI() {
 	searchObj.SearchMode = false
 	searchObj.CommandSize = len(commands)
 	searchObj.SearchTitle = "查找主机: "
-	origTitle := "选择登录的主机 Help:(1: <TAB/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <q/C-c>退出)"
+	origTitle := "选择登录的主机 Help:(1: <TAB/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <ESC/q/C-c>退出)"
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -150,6 +150,9 @@ func drawUI() {
 			searchObj.Reset()
 			ls.BorderLabel = origTitle
 			repaint(0)
+		} else {
+			termui.StopLoop()
+			exitNow = true
 		}
 	})
 	termui.Handle("/sys/kbd/q", func(termui.Event) {
