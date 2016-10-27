@@ -23,6 +23,7 @@ type SearchObj struct {
 	QueryStr         string
 	CommandSize      int
 	SearchTitle      string
+	SearchMode       bool
 }
 
 func (so *SearchObj) Reset() {
@@ -84,7 +85,7 @@ func main() {
 }
 
 func drawUI() {
-	serachMode := false
+	searchObj.SearchMode = false
 	searchObj.CommandSize = len(commands)
 	searchObj.SearchTitle = "查找主机: "
 	origTitle := "选择登录的主机 Help:(1: <TAB/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <q/C-c>退出)"
@@ -144,15 +145,15 @@ func drawUI() {
 		termui.StopLoop()
 	})
 	termui.Handle("/sys/kbd/<escape>", func(termui.Event) {
-		if serachMode {
-			serachMode = false
+		if searchObj.SearchMode {
+			searchObj.SearchMode = false
 			searchObj.Reset()
 			ls.BorderLabel = origTitle
 			repaint(0)
 		}
 	})
 	termui.Handle("/sys/kbd/q", func(termui.Event) {
-		if !serachMode {
+		if !searchObj.SearchMode {
 			termui.StopLoop()
 			exitNow = true
 		} else {
@@ -164,10 +165,12 @@ func drawUI() {
 		exitNow = true
 	})
 	termui.Handle("/sys/kbd/<tab>", func(termui.Event) {
-		repaint(1)
+		if !searchObj.SearchMode {
+			repaint(1)
+		}
 	})
 	termui.Handle("/sys/kbd/C-n", func(termui.Event) {
-		if serachMode {
+		if searchObj.SearchMode {
 			offset := searchObj.Next(currentIndex)
 			ls.BorderLabel = searchObj.Title()
 			repaint(offset)
@@ -176,14 +179,14 @@ func drawUI() {
 		}
 	})
 	termui.Handle("/sys/kbd/j", func(termui.Event) {
-		if !serachMode {
+		if !searchObj.SearchMode {
 			repaint(1)
 		} else {
 			appendQuery("j")
 		}
 	})
 	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
-		if serachMode {
+		if searchObj.SearchMode {
 			offset := searchObj.Prev(currentIndex)
 			ls.BorderLabel = searchObj.Title()
 			repaint(offset)
@@ -192,7 +195,7 @@ func drawUI() {
 		}
 	})
 	termui.Handle("/sys/kbd/k", func(termui.Event) {
-		if !serachMode {
+		if !searchObj.SearchMode {
 			repaint(-1)
 		} else {
 			appendQuery("k")
@@ -205,14 +208,14 @@ func drawUI() {
 		repaint(-10)
 	})
 	termui.Handle("/sys/kbd/G", func(termui.Event) {
-		if !serachMode {
+		if !searchObj.SearchMode {
 			repaint(-currentIndex - 1)
 		} else {
 			appendQuery("G")
 		}
 	})
 	termui.Handle("/sys/kbd/g", func(termui.Event) {
-		if !serachMode {
+		if !searchObj.SearchMode {
 			repaint(-currentIndex)
 		} else {
 			appendQuery("g")
@@ -227,12 +230,12 @@ func drawUI() {
 		if !ok {
 			return
 		}
-		if kb.KeyStr == "/" && !serachMode {
-			serachMode = true
+		if kb.KeyStr == "/" && !searchObj.SearchMode {
+			searchObj.SearchMode = true
 			searchObj.Reset()
 			ls.BorderLabel = searchObj.Title()
 			repaint(0)
-		} else if serachMode {
+		} else if searchObj.SearchMode {
 			if kb.KeyStr == "C-8" {
 				// delete char
 				_, size := utf8.DecodeLastRuneInString(searchObj.QueryStr)
@@ -251,20 +254,38 @@ func drawUI() {
 	termui.Loop()
 }
 func formatCommands(commands []Cmd, index int) []string {
+	matchedMap := make(map[int]int)
+	for i, j := range searchObj.MatchedIndexList {
+		matchedMap[j] = i
+	}
 	var strs []string
 	start := index - MaxLine + 1
 	if start < 0 {
 		start = 0
 	}
 	end := start + MaxLine - 1
+	if searchObj.SearchMode {
+		start = searchObj.SelfIndexInList - MaxLine + 1
+		if start < 0 {
+			start = 0
+		}
+		end = start + MaxLine - 1
+	}
 	for i, c := range commands {
-		if i < start || i > end {
+		j, ok := matchedMap[i]
+		if searchObj.SearchMode {
+			if !ok || (j < start || j > end) {
+				continue
+			}
+		} else if i < start || i > end {
 			continue
 		}
-		if i == index {
-			strs = append(strs, fmt.Sprintf("[%v] [%s](fg-blue,bg-green)", i+1, c.Name))
-		} else {
-			strs = append(strs, fmt.Sprintf("[%v] %s", i+1, c.Name))
+		if !searchObj.SearchMode || (searchObj.SearchMode && ok) {
+			if i == index {
+				strs = append(strs, fmt.Sprintf("[%v] [%s](fg-blue,bg-green)", i+1, c.Name))
+			} else {
+				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, c.Name))
+			}
 		}
 	}
 	return strs
