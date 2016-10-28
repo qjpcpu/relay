@@ -205,10 +205,14 @@ func drawUI() {
 		}
 	})
 	termui.Handle("/sys/kbd/C-d", func(termui.Event) {
-		repaint(10)
+		if !searchObj.SearchMode {
+			repaint(10)
+		}
 	})
 	termui.Handle("/sys/kbd/C-u", func(termui.Event) {
-		repaint(-10)
+		if !searchObj.SearchMode {
+			repaint(-10)
+		}
 	})
 	termui.Handle("/sys/kbd/G", func(termui.Event) {
 		if !searchObj.SearchMode {
