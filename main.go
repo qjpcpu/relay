@@ -32,6 +32,42 @@ func (so *SearchObj) Reset() {
 	so.QueryStr = ""
 }
 
+func (so *SearchObj) Highlight(raw string, background bool) string {
+	qs := strings.ToLower(so.QueryStr)
+	raw1 := strings.ToLower(raw)
+	if so.SearchMode && so.QueryStr != "" && strings.Contains(raw1, qs) {
+		start := strings.Index(raw1, qs)
+		if start < 0 {
+			if background {
+				return fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
+			} else {
+				return raw
+			}
+		}
+		end := start + len(qs)
+		raw1 = ""
+		if start > 0 {
+			raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[0:start])
+		}
+		raw1 += fmt.Sprintf("[%s](fg-white,fg-bold,bg-green)", raw[start:end])
+		if end < len(raw) {
+			raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[end:len(raw)])
+		}
+		if !background {
+			raw1 = strings.Replace(raw1, ",bg-green", "", -1)
+		} else {
+			raw1 = strings.Replace(raw1, "fg-magenta", "fg-blue", -1)
+		}
+		return raw1
+	} else {
+		if background {
+			return fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
+		} else {
+			return raw
+		}
+	}
+}
+
 func (so *SearchObj) Title() string {
 	if len(so.MatchedIndexList) > 0 {
 		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
@@ -289,9 +325,9 @@ func formatCommands(commands []Cmd, index int) []string {
 		}
 		if !searchObj.SearchMode || (searchObj.SearchMode && ok) {
 			if i == index {
-				strs = append(strs, fmt.Sprintf("[%v] [%s](fg-blue,bg-green)", i+1, c.Name))
+				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, searchObj.Highlight(c.Name, true)))
 			} else {
-				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, c.Name))
+				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, searchObj.Highlight(c.Name, false)))
 			}
 		}
 	}
