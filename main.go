@@ -115,6 +115,7 @@ func main() {
 	}
 	drawUI()
 	if !exitNow {
+		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
 		runCommand(commands[currentIndex].Cmd)
 	}
 	os.Exit(0)
