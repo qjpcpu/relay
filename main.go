@@ -70,7 +70,7 @@ func (so *SearchObj) Highlight(raw string, background bool) string {
 
 func (so *SearchObj) Title() string {
 	if len(so.MatchedIndexList) > 0 {
-		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
+		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p/down/up导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
 	} else {
 		return fmt.Sprintf("%s%s     按ESC退出搜索", so.SearchTitle, so.QueryStr)
 	}
@@ -218,6 +218,15 @@ func drawUI() {
 			repaint(1)
 		}
 	})
+	termui.Handle("/sys/kbd/<down>", func(termui.Event) {
+		if searchObj.SearchMode {
+			offset := searchObj.Next(currentIndex)
+			ls.BorderLabel = searchObj.Title()
+			repaint(offset)
+		} else {
+			repaint(1)
+		}
+	})
 	termui.Handle("/sys/kbd/j", func(termui.Event) {
 		if !searchObj.SearchMode {
 			repaint(1)
@@ -226,6 +235,15 @@ func drawUI() {
 		}
 	})
 	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
+		if searchObj.SearchMode {
+			offset := searchObj.Prev(currentIndex)
+			ls.BorderLabel = searchObj.Title()
+			repaint(offset)
+		} else {
+			repaint(-1)
+		}
+	})
+	termui.Handle("/sys/kbd/<up>", func(termui.Event) {
 		if searchObj.SearchMode {
 			offset := searchObj.Prev(currentIndex)
 			ls.BorderLabel = searchObj.Title()
