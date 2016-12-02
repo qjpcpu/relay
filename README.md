@@ -32,3 +32,28 @@ relay
 ```
 
 ![snapshot](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot.png)
+
+
+#### 快捷方式
+
+直接执行上次执行的命令
+
+```
+relay last
+```
+
+快捷执行命令别名
+
+快速执行`~/.relay.conf`配置中的别名为fast的命令
+
+```
+-
+ name: 线上服务器2
+ cmd: ssh work@online2.example.com
+ alias: fast
+```
+
+```
+relay fast
+```
+
