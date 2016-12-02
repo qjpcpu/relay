@@ -13,8 +13,9 @@ import (
 )
 
 type Cmd struct {
-	Cmd  string `yaml:"cmd"`
-	Name string `yaml:"name"`
+	Cmd   string `yaml:"cmd"`
+	Name  string `yaml:"name"`
+	Alias string `yaml:"alias"`
 }
 
 type SearchObj struct {
@@ -101,6 +102,7 @@ func (so *SearchObj) Prev(current int) int {
 var MaxLine int = 20
 
 var configFile string = os.Getenv("HOME") + "/.relay.conf"
+var cacheFile string = os.Getenv("HOME") + "/.relay_cache"
 
 var commands []Cmd
 var searchObj = &SearchObj{}
@@ -113,10 +115,28 @@ func main() {
 		fmt.Println("无主机配置")
 		os.Exit(1)
 	}
-	drawUI()
+	shortcut := false
+	if len(os.Args) >= 2 && os.Args[1] != "" {
+		if cache, err := loadCache(); err == nil && os.Args[1] == "last" && cache.LastIndex < len(commands) {
+			shortcut = true
+			currentIndex = cache.LastIndex
+		} else {
+			for i, cmd := range commands {
+				if cmd.Alias == os.Args[1] {
+					shortcut = true
+					currentIndex = i
+				}
+			}
+		}
+	}
+	if !shortcut {
+		drawUI()
+	}
 	if !exitNow {
 		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
 		runCommand(commands[currentIndex].Cmd)
+		cache := Cache{LastIndex: currentIndex}
+		saveCache(cache)
 	}
 	os.Exit(0)
 }
@@ -366,6 +386,26 @@ func loadCommands() []Cmd {
 		os.Exit(1)
 	}
 	return commands
+}
+
+type Cache struct {
+	LastIndex int
+}
+
+func loadCache() (c Cache, err error) {
+	data, err := ioutil.ReadFile(cacheFile)
+	if err != nil {
+		return
+	}
+	err = yaml.Unmarshal(data, &c)
+	if err != nil {
+		return
+	}
+	return
+}
+func saveCache(c Cache) {
+	data, _ := yaml.Marshal(c)
+	ioutil.WriteFile(cacheFile, data, 0644)
 }
 
 func runCommand(cmdstr string) {
