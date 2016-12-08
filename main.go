@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"syscall"
 	"unicode/utf8"
 )
 
@@ -134,11 +135,10 @@ func main() {
 	}
 	if !exitNow {
 		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
-		runCommand(commands[currentIndex].Cmd)
 		cache := Cache{LastIndex: currentIndex}
 		saveCache(cache)
+		execCommand(commands[currentIndex].Cmd)
 	}
-	os.Exit(0)
 }
 
 func drawUI() {
@@ -414,4 +414,17 @@ func runCommand(cmdstr string) {
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Run()
+}
+
+func execCommand(cmdstr string) {
+	binary, lookErr := exec.LookPath("bash")
+	if lookErr != nil {
+		panic(lookErr)
+	}
+	args := []string{"bash", "-c", cmdstr}
+	env := os.Environ()
+	execErr := syscall.Exec(binary, args, env)
+	if execErr != nil {
+		panic(execErr)
+	}
 }
