@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/atotto/clipboard"
 	"github.com/gizak/termui"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -421,6 +422,7 @@ func execCommand(cmdstr string) {
 	if lookErr != nil {
 		panic(lookErr)
 	}
+	// save command to clipboard
 	args := []string{"bash", "-c", cmdstr}
 	env := os.Environ()
 	execErr := syscall.Exec(binary, args, env)
