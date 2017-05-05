@@ -138,6 +138,8 @@ func main() {
 		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
 		cache := Cache{LastIndex: currentIndex}
 		saveCache(cache)
+		// save command to clipboard
+		clipboard.WriteAll(commands[currentIndex].Cmd)
 		execCommand(commands[currentIndex].Cmd)
 	}
 }
@@ -422,7 +424,6 @@ func execCommand(cmdstr string) {
 	if lookErr != nil {
 		panic(lookErr)
 	}
-	// save command to clipboard
 	args := []string{"bash", "-c", cmdstr}
 	env := os.Environ()
 	execErr := syscall.Exec(binary, args, env)
