@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/atotto/clipboard"
 	"github.com/gizak/termui"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -138,8 +137,7 @@ func main() {
 		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
 		cache := Cache{LastIndex: currentIndex}
 		saveCache(cache)
-		// save command to clipboard
-		clipboard.WriteAll(commands[currentIndex].Cmd)
+		changeCliHistory(os.Args[0], commands[currentIndex].Cmd)
 		execCommand(commands[currentIndex].Cmd)
 	}
 }
@@ -430,4 +428,38 @@ func execCommand(cmdstr string) {
 	if execErr != nil {
 		panic(execErr)
 	}
+}
+
+func changeCliHistory(prefix string, newcmd string) {
+	file := os.Getenv("HISTFILE")
+	if file == "" {
+		home := os.Getenv("HOME")
+		shell := strings.Split(os.Getenv("SHELL"), "/")
+		file = home + "/." + shell[len(shell)-1] + "_history"
+	}
+	if file == "" {
+		return
+	}
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return
+	}
+	lines := strings.Split(string(data), "\n")
+	var cmd string
+	for i := len(lines) - 1; i >= 0; i-- {
+		if strings.Contains(lines[i], prefix) {
+			cmd = lines[i]
+			index := strings.Index(cmd, prefix)
+			if index < 0 {
+				return
+			}
+			lines[i] = cmd[0:index] + newcmd
+			break
+		}
+	}
+	if cmd == "" {
+		return
+	}
+	str := strings.Join(lines, "\n")
+	ioutil.WriteFile(file, []byte(str), 0600)
 }
