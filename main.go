@@ -364,10 +364,14 @@ func formatCommands(commands []Cmd, index int) []string {
 			continue
 		}
 		if !searchObj.SearchMode || (searchObj.SearchMode && ok) {
+			fmtI := "%02d"
+			if len(commands) > 100 {
+				fmtI = "%03d"
+			}
 			if i == index {
-				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, searchObj.Highlight(c.Name, true)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c.Name, true)))
 			} else {
-				strs = append(strs, fmt.Sprintf("[%v] %s", i+1, searchObj.Highlight(c.Name, false)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c.Name, false)))
 			}
 		}
 	}
