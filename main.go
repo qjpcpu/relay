@@ -17,6 +17,8 @@ type Cmd struct {
 	Name string `yaml:"name"`
 	// command shortcut, fast access
 	Alias string `yaml:"alias"`
+	// real command
+	RealCommand string
 }
 
 // initial value for max lines per screen
@@ -44,12 +46,14 @@ func main() {
 		os.Exit(1)
 	}
 	shortcut := false
+	populateData := make(map[string]string)
 	// should be: relay [alias shortcut/last]
 	if len(os.Args) >= 2 && os.Args[1] != "" {
 		// relay last: run the latest command directly
 		if cache, err := loadCache(); err == nil && os.Args[1] == "last" && cache.LastIndex < len(commands) {
 			shortcut = true
 			currentIndex = cache.LastIndex
+			populateData = cache.Data
 		} else {
 			// relay alias: run the command searched by alias
 			for i, cmd := range commands {
@@ -66,14 +70,22 @@ func main() {
 	}
 	// if user press q/C-c,exit now; else run the command selected.
 	if !exitNow {
-		fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].Cmd)
+		// populate command variables if exists
+		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
+			populateData = populateCommand(&commands[currentIndex], populateData)
+			fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
+		} else {
+			fmt.Printf("命令\033[1;33m%s\033[0m需要填充变量:\n", commands[currentIndex].Name)
+			populateData = populateCommand(&commands[currentIndex], populateData)
+			fmt.Printf("执行命令: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
+		}
 		// cache the comand as lastest command
-		cache := Cache{LastIndex: currentIndex}
+		cache := Cache{LastIndex: currentIndex, Data: populateData}
 		saveCache(cache)
 		// record command history, write the command to shell history file, this is the simplest way I know, maybe someone would advise me better way
-		changeCliHistory(os.Args[0], commands[currentIndex].Cmd)
+		changeCliHistory(os.Args[0], commands[currentIndex].RealCommand)
 		// run the command selected
-		execCommand(commands[currentIndex].Cmd)
+		execCommand(commands[currentIndex].RealCommand)
 	}
 }
 
@@ -89,6 +101,9 @@ func loadCommands() []Cmd {
 	if err != nil {
 		fmt.Printf("解析配置文件%s失败", configFile)
 		os.Exit(1)
+	}
+	for i, cmd := range commands {
+		commands[i].RealCommand = cmd.Cmd
 	}
 	return commands
 }

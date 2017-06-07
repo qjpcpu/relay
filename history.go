@@ -9,6 +9,7 @@ import (
 
 type Cache struct {
 	LastIndex int
+	Data      map[string]string
 }
 
 func loadCache() (c Cache, err error) {

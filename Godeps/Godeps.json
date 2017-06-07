@@ -7,6 +7,11 @@
 			"Rev": "202925a536c7febe22698792a2b6de68edb2726d"
 		},
 		{
+			"ImportPath": "github.com/hoisie/mustache",
+			"Comment": "0.0.1-17-g6375acf",
+			"Rev": "6375acf62c69d9d3ad20fd0599d82ca94ea12284"
+		},
+		{
 			"ImportPath": "github.com/mattn/go-runewidth",
 			"Comment": "v0.0.1",
 			"Rev": "d6bea18f789704b5f83375793155289da36a3c7f"
