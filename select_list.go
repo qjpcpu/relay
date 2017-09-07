@@ -8,17 +8,17 @@ import (
 	"unicode/utf8"
 )
 
-type SelectItem interface {
-	GetName() string
-}
-
 type SelectList struct {
 	SelectedIndex int
-	Items         []SelectItem
+	Items         []string
+	shortItems    []string
 	SelectNothing bool
 }
 
 var MaxLine = 20
+
+const maxChar = 80
+
 var searchObj = &SearchObj{}
 
 type SearchObj struct {
@@ -104,6 +104,13 @@ func (so *SearchObj) Prev(current int) int {
 }
 
 func (slist *SelectList) DrawUI() {
+	for _, item := range slist.Items {
+		if len(item) > maxChar {
+			slist.shortItems = append(slist.shortItems, item[0:maxChar]+"...")
+		} else {
+			slist.shortItems = append(slist.shortItems, item)
+		}
+	}
 	searchObj = &SearchObj{}
 	searchObj.SearchMode = false
 	searchObj.CommandSize = len(slist.Items)
@@ -119,7 +126,7 @@ func (slist *SelectList) DrawUI() {
 		MaxLine = termui.TermHeight() - 3
 	}
 
-	strs := formatCommands(slist.Items, slist.SelectedIndex)
+	strs := formatCommands(slist.shortItems, slist.SelectedIndex)
 
 	ls := termui.NewList()
 	ls.Items = strs
@@ -147,7 +154,7 @@ func (slist *SelectList) DrawUI() {
 		searchObj.SelfIndexInList = 0
 		if searchObj.QueryStr != "" {
 			for i, c := range slist.Items {
-				if strings.Contains(strings.ToLower(c.GetName()), strings.ToLower(searchObj.QueryStr)) {
+				if strings.Contains(strings.ToLower(c), strings.ToLower(searchObj.QueryStr)) {
 					searchObj.MatchedIndexList = append(searchObj.MatchedIndexList, i)
 				}
 			}
@@ -300,7 +307,7 @@ func (slist *SelectList) DrawUI() {
 }
 
 // format command for UI display
-func formatCommands(commands []SelectItem, index int) []string {
+func formatCommands(commands []string, index int) []string {
 	matchedMap := make(map[int]int)
 	for i, j := range searchObj.MatchedIndexList {
 		matchedMap[j] = i
@@ -333,9 +340,9 @@ func formatCommands(commands []SelectItem, index int) []string {
 				fmtI = "%03d"
 			}
 			if i == index {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c.GetName(), true)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c, true)))
 			} else {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c.GetName(), false)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, searchObj.Highlight(c, false)))
 			}
 		}
 	}

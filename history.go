@@ -1,13 +1,14 @@
 package main
 
 import (
-	"gopkg.in/yaml.v2"
+	"encoding/json"
 	"io/ioutil"
 )
 
 type Cache struct {
 	LastIndex int
 	Data      map[string]string
+	History   []string
 }
 
 func loadCache() (c Cache, err error) {
@@ -15,7 +16,7 @@ func loadCache() (c Cache, err error) {
 	if err != nil {
 		return
 	}
-	err = yaml.Unmarshal(data, &c)
+	err = json.Unmarshal(data, &c)
 	if err != nil {
 		return
 	}
@@ -23,6 +24,6 @@ func loadCache() (c Cache, err error) {
 }
 
 func saveCache(c Cache) {
-	data, _ := yaml.Marshal(c)
+	data, _ := json.Marshal(c)
 	ioutil.WriteFile(cacheFile, data, 0644)
 }

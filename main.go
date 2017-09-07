@@ -44,14 +44,33 @@ func main() {
 	}
 	shortcut := false
 	populateData := make(map[string]string)
-	// should be: relay [alias shortcut/last]
+	// should be: relay [alias shortcut/!/!!]
+	fmt.Println(os.Args)
 	if len(os.Args) >= 2 && os.Args[1] != "" {
-		// relay last: run the latest command directly
-		if cache, err := loadCache(); err == nil && os.Args[1] == "last" && cache.LastIndex < len(commands) {
-			shortcut = true
-			currentIndex = cache.LastIndex
-			populateData = cache.Data
-		} else {
+		for loop := true; loop; loop = false {
+			// relay !: run the latest command directly
+			cache, err := loadCache()
+			if err == nil && os.Args[1] == "!" && cache.LastIndex < len(commands) {
+				shortcut = true
+				currentIndex = cache.LastIndex
+				populateData = cache.Data
+				break
+			}
+			// relay @: run from history
+			if err == nil && os.Args[1] == "@" && len(cache.History) > 0 {
+				fmt.Println(cache.History)
+				selects := &SelectList{
+					SelectedIndex: currentIndex,
+					Items:         cache.History,
+					SelectNothing: false,
+				}
+				selects.DrawUI()
+				if !selects.SelectNothing {
+					execCommand(cache.History[selects.SelectedIndex])
+					os.Exit(0)
+				}
+				break
+			}
 			// relay alias: run the command searched by alias
 			for i, cmd := range commands {
 				if cmd.Alias == os.Args[1] {
@@ -84,6 +103,7 @@ func main() {
 		}
 		// cache the comand as lastest command
 		cache := Cache{LastIndex: currentIndex, Data: populateData}
+		cache.History = append(cache.History, commands[currentIndex].RealCommand)
 		saveCache(cache)
 		// run the command selected
 		execCommand(commands[currentIndex].RealCommand)
@@ -127,10 +147,10 @@ func (c Cmd) GetName() string {
 	return c.Name
 }
 
-func commands2Items(cs []Cmd) []SelectItem {
-	var list []SelectItem
+func commands2Items(cs []Cmd) []string {
+	var list []string
 	for _, c := range cs {
-		list = append(list, c)
+		list = append(list, c.Name)
 	}
 	return list
 }
