@@ -17,8 +17,6 @@ type SelectList struct {
 
 var MaxLine = 20
 
-const maxChar = 80
-
 var searchObj = &SearchObj{}
 
 type SearchObj struct {
@@ -105,11 +103,7 @@ func (so *SearchObj) Prev(current int) int {
 
 func (slist *SelectList) DrawUI() {
 	for _, item := range slist.Items {
-		if len(item) > maxChar {
-			slist.shortItems = append(slist.shortItems, item[0:maxChar]+"...")
-		} else {
-			slist.shortItems = append(slist.shortItems, item)
-		}
+		slist.shortItems = append(slist.shortItems, item)
 	}
 	searchObj = &SearchObj{}
 	searchObj.SearchMode = false
@@ -145,7 +139,7 @@ func (slist *SelectList) DrawUI() {
 			nIndex += len(slist.Items)
 		}
 		slist.SelectedIndex = nIndex % len(slist.Items)
-		ls.Items = formatCommands(slist.Items, slist.SelectedIndex)
+		ls.Items = formatCommands(slist.shortItems, slist.SelectedIndex)
 		termui.Render(termui.Body)
 	}
 
