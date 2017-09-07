@@ -21,9 +21,6 @@ type Cmd struct {
 	RealCommand string
 }
 
-// initial value for max lines per screen
-var MaxLine int = 20
-
 // default configuration files[format:yaml]
 var configFile string = os.Getenv("HOME") + "/.relay.conf"
 
@@ -64,12 +61,18 @@ func main() {
 			}
 		}
 	}
+	selects := &SelectList{
+		SelectedIndex: currentIndex,
+		Items:         commands2Items(commands),
+		SelectNothing: false,
+	}
 	// if no shortcut specify, show selection UI
 	if !shortcut {
-		drawUI()
+		selects.DrawUI()
 	}
 	// if user press q/C-c,exit now; else run the command selected.
-	if !exitNow {
+	if !selects.SelectNothing {
+		currentIndex = selects.SelectedIndex
 		// populate command variables if exists
 		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
 			populateData = populateCommand(&commands[currentIndex], populateData)
@@ -82,8 +85,6 @@ func main() {
 		// cache the comand as lastest command
 		cache := Cache{LastIndex: currentIndex, Data: populateData}
 		saveCache(cache)
-		// record command history, write the command to shell history file, this is the simplest way I know, maybe someone would advise me better way
-		changeCliHistory(os.Args[0], commands[currentIndex].RealCommand)
 		// run the command selected
 		execCommand(commands[currentIndex].RealCommand)
 	}
@@ -120,4 +121,16 @@ func execCommand(cmdstr string) {
 	if execErr != nil {
 		panic(execErr)
 	}
+}
+
+func (c Cmd) GetName() string {
+	return c.Name
+}
+
+func commands2Items(cs []Cmd) []SelectItem {
+	var list []SelectItem
+	for _, c := range cs {
+		list = append(list, c)
+	}
+	return list
 }
