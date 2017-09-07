@@ -58,12 +58,14 @@ func main() {
 			// relay @: run from history
 			if err == nil && os.Args[1] == "@" && len(cache.History) > 0 {
 				history := make([]string, len(cache.History))
+				history_names := make([]string, len(cache.History))
 				for i, c := range cache.History {
-					history[len(cache.History)-i-1] = c
+					history[len(cache.History)-i-1] = c.RealCommand
+					history_names[len(cache.History)-i-1] = c.Name + ": " + c.RealCommand
 				}
 				selects := &SelectList{
 					SelectedIndex: currentIndex,
-					Items:         history,
+					Items:         history_names,
 					SelectNothing: false,
 				}
 				selects.DrawUI()
@@ -105,7 +107,7 @@ func main() {
 		}
 		// cache the comand as lastest command
 		cache = Cache{LastIndex: currentIndex, Data: populateData, History: cache.History}
-		cache.History = append(cache.History, commands[currentIndex].RealCommand)
+		cache.History = append(cache.History, commands[currentIndex])
 		saveCache(cache)
 		// run the command selected
 		execCommand(commands[currentIndex].RealCommand)

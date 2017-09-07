@@ -8,7 +8,7 @@ import (
 type Cache struct {
 	LastIndex int
 	Data      map[string]string
-	History   []string
+	History   []Cmd // name,realcommand
 }
 
 func loadCache() (c Cache, err error) {
