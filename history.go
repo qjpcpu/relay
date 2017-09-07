@@ -24,6 +24,10 @@ func loadCache() (c Cache, err error) {
 }
 
 func saveCache(c Cache) {
+	hmax := 50
+	if l := len(c.History); l > hmax {
+		c.History = c.History[(l - hmax):l]
+	}
 	data, _ := json.Marshal(c)
 	ioutil.WriteFile(cacheFile, data, 0644)
 }
