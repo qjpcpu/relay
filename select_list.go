@@ -73,7 +73,7 @@ func (so *SearchObj) Highlight(raw string, background bool) string {
 
 func (so *SearchObj) Title() string {
 	if len(so.MatchedIndexList) > 0 {
-		return fmt.Sprintf("%s%s     [共匹配到%d个,第%d个,按C-n/C-p/down/up导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
+		return fmt.Sprintf("%s%s     [共匹配到%d项,第%d项,按C-n/C-p/down/up导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
 	} else {
 		return fmt.Sprintf("%s%s     按ESC退出搜索", so.SearchTitle, so.QueryStr)
 	}
