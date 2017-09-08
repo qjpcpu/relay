@@ -101,7 +101,7 @@ func main() {
 			populateData = populateCommand(&commands[currentIndex], populateData)
 			fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
 		} else {
-			fmt.Printf("Fill command\033[1;33m%s\033[0mvariables:\n", commands[currentIndex].Name)
+			fmt.Printf("Fill variables of command \033[1;33m%s\033[0m:\n", commands[currentIndex].Name)
 			populateData = populateCommand(&commands[currentIndex], populateData)
 			fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
 		}
