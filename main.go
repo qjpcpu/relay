@@ -39,7 +39,7 @@ var exitNow bool = false
 func main() {
 	commands = loadCommands()
 	if len(commands) == 0 {
-		fmt.Println("无主机配置")
+		fmt.Println("no command list")
 		os.Exit(1)
 	}
 	shortcut := false
@@ -99,11 +99,11 @@ func main() {
 		// populate command variables if exists
 		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
 			populateData = populateCommand(&commands[currentIndex], populateData)
-			fmt.Printf("执行命令: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
+			fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
 		} else {
-			fmt.Printf("命令\033[1;33m%s\033[0m需要填充变量:\n", commands[currentIndex].Name)
+			fmt.Printf("Fill command\033[1;33m%s\033[0mvariables:\n", commands[currentIndex].Name)
 			populateData = populateCommand(&commands[currentIndex], populateData)
-			fmt.Printf("执行命令: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
+			fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
 		}
 		// cache the comand as lastest command
 		cache = Cache{LastIndex: currentIndex, Data: populateData, History: cache.History}
@@ -118,13 +118,13 @@ func main() {
 func loadCommands() []Cmd {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Printf("读取配置文件%s失败", configFile)
+		fmt.Printf("faild to load %s", configFile)
 		os.Exit(1)
 	}
 	var commands []Cmd
 	err = yaml.Unmarshal(data, &commands)
 	if err != nil {
-		fmt.Printf("解析配置文件%s失败", configFile)
+		fmt.Printf("fail to parse %s", configFile)
 		os.Exit(1)
 	}
 	for i, cmd := range commands {

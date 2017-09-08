@@ -73,9 +73,9 @@ func (so *SearchObj) Highlight(raw string, background bool) string {
 
 func (so *SearchObj) Title() string {
 	if len(so.MatchedIndexList) > 0 {
-		return fmt.Sprintf("%s%s     [共匹配到%d项,第%d项,按C-n/C-p/down/up导航] 按ESC退出搜索", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
+		return fmt.Sprintf("%s%s     [Total %d items, current @%d, Navigation by C-n/C-p/down/up] press ESC exit search", so.SearchTitle, so.QueryStr, len(so.MatchedIndexList), so.SelfIndexInList+1)
 	} else {
-		return fmt.Sprintf("%s%s     按ESC退出搜索", so.SearchTitle, so.QueryStr)
+		return fmt.Sprintf("%s%s     Press ESC exit search", so.SearchTitle, so.QueryStr)
 	}
 }
 func (so *SearchObj) Next(current int) int {
@@ -108,8 +108,8 @@ func (slist *SelectList) DrawUI() {
 	searchObj = &SearchObj{}
 	searchObj.SearchMode = false
 	searchObj.CommandSize = len(slist.Items)
-	searchObj.SearchTitle = "搜索: "
-	origTitle := "选择项 Help:(1: <TAB/j/k>进行选择 2: <C-d/C-u/g/G>翻页/第一行/最后一行 3: </>搜索 4: Enter确认 5: <ESC/q/C-c>退出)"
+	searchObj.SearchTitle = "Search: "
+	origTitle := "Select item Help:(1: <TAB/j/C-n/k/C-p>Next/Prev 2: <C-d/C-u/g/G>PageDown/PageUp/FirstLine/LastLine 3: </>Search 4: <Enter>Confirm 5: <ESC/q/C-c>Exit)"
 	err := termui.Init()
 	if err != nil {
 		panic(err)
