@@ -109,7 +109,7 @@ func (slist *SelectList) DrawUI() {
 	searchObj.SearchMode = false
 	searchObj.CommandSize = len(slist.Items)
 	searchObj.SearchTitle = "Search: "
-	origTitle := "Help:(1: <TAB/j/C-n/k/C-p>Next/Prev 2: <C-d/C-u/g/G>PageDown/PageUp/FirstLine/LastLine 3: </>Search 4: <Enter>Confirm 5: <ESC/q/C-c>Exit)"
+	origTitle := "Help:(1: <Enter>Confirm 2: </|C-s>Search 3: <ESC|q|C-c>Exit)"
 	err := termui.Init()
 	if err != nil {
 		panic(err)
@@ -289,7 +289,7 @@ func (slist *SelectList) DrawUI() {
 		if !ok {
 			return
 		}
-		if kb.KeyStr == "/" && !searchObj.SearchMode {
+		if (kb.KeyStr == "/" || kb.KeyStr == "C-s") && !searchObj.SearchMode {
 			searchObj.SearchMode = true
 			searchObj.Reset()
 			ls.BorderLabel = searchObj.Title()
