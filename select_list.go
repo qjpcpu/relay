@@ -243,12 +243,26 @@ func (slist *SelectList) DrawUI() {
 			appendQuery("k")
 		}
 	})
+	// vim page down
 	termui.Handle("/sys/kbd/C-d", func(termui.Event) {
 		if !searchObj.SearchMode {
 			repaint(10)
 		}
 	})
+	// emacs page down
+	termui.Handle("/sys/kbd/C-v", func(termui.Event) {
+		if !searchObj.SearchMode {
+			repaint(10)
+		}
+	})
+	// vim page up
 	termui.Handle("/sys/kbd/C-u", func(termui.Event) {
+		if !searchObj.SearchMode {
+			repaint(-10)
+		}
+	})
+	// emacs page up
+	termui.Handle("/sys/kbd/√", func(termui.Event) {
 		if !searchObj.SearchMode {
 			repaint(-10)
 		}
@@ -270,7 +284,6 @@ func (slist *SelectList) DrawUI() {
 	termui.Handle("/sys/wnd/resize", func(termui.Event) {
 		repaint(0)
 	})
-
 	termui.Handle("/sys/kbd", func(evt termui.Event) {
 		kb, ok := evt.Data.(termui.EvtKbd)
 		if !ok {
