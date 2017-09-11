@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 )
@@ -28,6 +29,9 @@ func saveCache(c Cache) {
 	if l := len(c.History); l > hmax {
 		c.History = c.History[(l - hmax):l]
 	}
-	data, _ := json.Marshal(c)
-	ioutil.WriteFile(cacheFile, data, 0644)
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(c)
+	ioutil.WriteFile(cacheFile, buffer.Bytes(), 0644)
 }
