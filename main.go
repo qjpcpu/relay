@@ -45,7 +45,7 @@ func main() {
 	shortcut := false
 	populateData := make(map[string]string)
 	cache, err := loadCache()
-	// should be: relay [alias shortcut/!/!!]
+	// should be: relay [alias shortcut/!/@]
 	if len(os.Args) >= 2 && os.Args[1] != "" {
 		for loop := true; loop; loop = false {
 			// relay !: run the latest command directly
