@@ -96,6 +96,12 @@ func main() {
 	// if user press q/C-c,exit now; else run the command selected.
 	if !selects.SelectNothing {
 		currentIndex = selects.SelectedIndex
+		// fast run command like relay alias param1 param2 ...
+		if vnames := commands[currentIndex].Variables(); shortcut && len(vnames) == len(os.Args)-2 && len(populateData) == 0 {
+			for i, vn := range vnames {
+				populateData[vn] = os.Args[i+2]
+			}
+		}
 		// populate command variables if exists
 		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
 			populateData = populateCommand(&commands[currentIndex], populateData)
