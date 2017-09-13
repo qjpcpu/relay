@@ -1,7 +1,7 @@
 relay
 =====================================
 
-`relay` is a command collector and trigger. Delegate all your high-frequency commands to relay, then use it via relay.
+`relay` is a command collector and trigger. Delegate all your high-frequency commands to relay, then use it conviencely.
 
 ### Install
 
@@ -86,4 +86,6 @@ relay db
 
 ```
 relay hi Jason
+# or interactively
+relay hi
 ```
