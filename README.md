@@ -16,6 +16,15 @@ git clone git@github.com:qjpcpu/relay.git
 cd relay && godep go build
 ```
 
+or download binary file
+
+```
+# for linux
+wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.darwin -O relay
+# for osx
+wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.linux -O relay
+```
+
 ### Configuration
 
 Default config file is `~/.relay.conf`, which is yaml format. Also you can specify config file with flag `-c`:
