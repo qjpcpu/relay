@@ -48,6 +48,27 @@ Default config file is `~/.relay.conf`, which is yaml format. Also you can speci
 
 ### Use relay
 
+show help with `relay --help`:
+
+```
+NAME:
+   relay - command relay station
+
+USAGE:
+   relay [global options] [command alias] [arguments...]
+
+AUTHOR:
+   JasonQu <qjpcpu@gmail.com>
+
+COMMANDS:
+     !  run last command
+     @  show relay history
+
+GLOBAL OPTIONS:
+   -c value    specify config file (default: "/home/ubuntu/.relay.conf")
+   --help, -h  show help
+```
+
 ```
 relay
 ```
