@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -27,60 +29,86 @@ var configFile string = os.Getenv("HOME") + "/.relay.conf"
 // cache relay history
 var cacheFile string = os.Getenv("HOME") + "/.relay_cache"
 
-// all commands loaded
-var commands []Cmd
-
-// cursor to current command
-var currentIndex int = 0
-
-// exit relay right now
-var exitNow bool = false
-
 func main() {
-	commands = loadCommands()
+	app := cli.NewApp()
+	app.Name = "relay"
+	app.Usage = "command relay station"
+	app.Authors = []cli.Author{
+		cli.Author{
+			Name:  "JasonQu",
+			Email: "qjpcpu@gmail.com",
+		},
+	}
+	app.UsageText = "relay [global options] [command alias] [arguments...]"
+	app.HideHelp = true
+	app.HideVersion = true
+	app.Before = func(c *cli.Context) error {
+		configFile = c.GlobalString("c")
+		return nil
+	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "c",
+			Usage: "specify config file",
+			Value: os.Getenv("HOME") + "/.relay.conf",
+		},
+		cli.BoolFlag{
+			Name:  "help, h",
+			Usage: "show help",
+		},
+	}
+	app.Action = func(c *cli.Context) error {
+		if c.GlobalBool("help") {
+			cli.ShowAppHelp(c)
+			return nil
+		}
+		return runRelayCommand(c)
+	}
+	app.Commands = []cli.Command{
+		{
+			Name:  "!",
+			Usage: "run last command",
+			Action: func(c *cli.Context) error {
+				return runLastCommand(c)
+			},
+		},
+		{
+			Name:  "@",
+			Usage: "show relay history",
+			Action: func(c *cli.Context) error {
+				return runHistoryCommand(c)
+			},
+		},
+	}
+	app.Run(os.Args)
+}
+
+func runLastCommand(c *cli.Context) error {
+	commands := loadCommands()
+	cache, err := loadCache()
+	if err == nil && cache.LastIndex < len(commands) {
+		doRunCmd(c, commands, cache.LastIndex, cache.Data, cache)
+	} else {
+		return runRelayCommand(c)
+	}
+	return nil
+}
+
+func runRelayCommand(c *cli.Context) error {
+	shortcut := false
+	alias := c.Args().Get(0)
+	commands := loadCommands()
+	currentIndex := 0
 	if len(commands) == 0 {
 		fmt.Println("no command list")
-		os.Exit(1)
+		return errors.New("no command list")
 	}
-	shortcut := false
-	populateData := make(map[string]string)
-	cache, err := loadCache()
-	// should be: relay [alias shortcut/!/@]
-	if len(os.Args) >= 2 && os.Args[1] != "" {
-		for loop := true; loop; loop = false {
-			// relay !: run the latest command directly
-			if err == nil && os.Args[1] == "!" && cache.LastIndex < len(commands) {
+	// relay alias: run the command searched by alias
+	if alias != "" && alias != "!" && alias != "@" {
+		for i, cmd := range commands {
+			if cmd.Alias == alias {
 				shortcut = true
-				currentIndex = cache.LastIndex
-				populateData = cache.Data
-				break
-			}
-			// relay @: run from history
-			if err == nil && os.Args[1] == "@" && len(cache.History) > 0 {
-				history := make([]string, len(cache.History))
-				history_names := make([]string, len(cache.History))
-				for i, c := range cache.History {
-					history[len(cache.History)-i-1] = c.RealCommand
-					history_names[len(cache.History)-i-1] = c.Name + ": " + c.RealCommand
-				}
-				selects := &SelectList{
-					SelectedIndex: currentIndex,
-					Items:         history_names,
-					SelectNothing: false,
-				}
-				selects.DrawUI()
-				if !selects.SelectNothing {
-					execCommand(history[selects.SelectedIndex])
-				}
-				os.Exit(0)
-				break
-			}
-			// relay alias: run the command searched by alias
-			for i, cmd := range commands {
-				if cmd.Alias == os.Args[1] {
-					shortcut = true
-					currentIndex = i
-				}
+				currentIndex = i
 			}
 		}
 	}
@@ -93,31 +121,66 @@ func main() {
 	if !shortcut {
 		selects.DrawUI()
 	}
+	populateData := make(map[string]string)
+	cache, _ := loadCache()
 	// if user press q/C-c,exit now; else run the command selected.
 	if !selects.SelectNothing {
-		currentIndex = selects.SelectedIndex
-		// fast run command like relay alias param1 param2 ...
-		if vnames := commands[currentIndex].Variables(); shortcut && len(vnames) == len(os.Args)-2 && len(populateData) == 0 {
-			for i, vn := range vnames {
-				populateData[vn] = os.Args[i+2]
-			}
-		}
-		// populate command variables if exists
-		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
-			populateData = populateCommand(&commands[currentIndex], populateData)
-			fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
-		} else {
-			fmt.Printf("Fill variables of command \033[1;33m%s\033[0m:\n", commands[currentIndex].Name)
-			populateData = populateCommand(&commands[currentIndex], populateData)
-			fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
-		}
-		// cache the comand as lastest command
-		cache = Cache{LastIndex: currentIndex, Data: populateData, History: cache.History}
-		cache.History = append(cache.History, commands[currentIndex])
-		saveCache(cache)
-		// run the command selected
-		execCommand(commands[currentIndex].RealCommand)
+		doRunCmd(c, commands, selects.SelectedIndex, populateData, cache)
 	}
+	return nil
+}
+
+func doRunCmd(c *cli.Context, commands []Cmd, index int, populateData map[string]string, cache Cache) {
+	currentIndex := index
+	// fast run command like relay alias param1 param2 ...
+	if vnames := commands[currentIndex].Variables(); len(vnames) == c.NArg()-1 && len(populateData) == 0 {
+		for i, vn := range vnames {
+			populateData[vn] = c.Args().Get(i + 1)
+		}
+	}
+	// populate command variables if exists
+	if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
+		populateData = populateCommand(&commands[currentIndex], populateData)
+		fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
+	} else {
+		fmt.Printf("Fill variables of command \033[1;33m%s\033[0m:\n", commands[currentIndex].Name)
+		populateData = populateCommand(&commands[currentIndex], populateData)
+		fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
+	}
+	// cache the comand as lastest command
+	cache = Cache{LastIndex: currentIndex, Data: populateData, History: cache.History}
+	cache.History = append(cache.History, commands[currentIndex])
+	saveCache(cache)
+	// run the command selected
+	execCommand(commands[currentIndex].RealCommand)
+}
+
+func runHistoryCommand(c *cli.Context) error {
+	cache, err := loadCache()
+	if err != nil {
+		fmt.Println("no history for now")
+		return err
+	}
+	if len(cache.History) == 0 {
+		fmt.Println("no history for now")
+		return nil
+	}
+	history := make([]string, len(cache.History))
+	history_names := make([]string, len(cache.History))
+	for i, c := range cache.History {
+		history[len(cache.History)-i-1] = c.RealCommand
+		history_names[len(cache.History)-i-1] = c.Name + ": " + c.RealCommand
+	}
+	selects := &SelectList{
+		SelectedIndex: 0,
+		Items:         history_names,
+		SelectNothing: false,
+	}
+	selects.DrawUI()
+	if !selects.SelectNothing {
+		execCommand(history[selects.SelectedIndex])
+	}
+	return nil
 }
 
 // load command from config file
