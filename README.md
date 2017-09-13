@@ -75,6 +75,17 @@ relay
 
 ![snapshot](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot1.png)
 
+keybinding in select list:
+
+```
+move previous/next command: j/k(like vim) or C-n/C-p(like emacs)  or arrow up/down
+jump first/last command: g/G(like vim)
+scroll page up/down: C-d/C-u(like vim)
+search mode: /(like vim), C-s(like emacs)
+move prev/next in search mode: C-n/C-p
+confirm and run selected command: Enter
+select nothing and exit: q/C-c
+```
 
 #### Shortcut
 
