@@ -19,10 +19,10 @@ cd relay && godep go build
 or download binary file
 
 ```
-# for linux
-wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.darwin -O relay
 # for osx
-wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.linux -O relay
+wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.darwin -O relay && chmod +x ./relay
+# for linux
+wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.linux -O relay && chmod +x ./relay
 ```
 
 ### Configuration
