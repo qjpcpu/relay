@@ -1,65 +1,89 @@
 relay
 =====================================
 
-简单ssh登录管理器(实际上可作为命令映射器),安装配置好后直接运行`relay`即可
+`relay` is a command collector and trigger. Delegate all your high-frequency commands to relay, then use it via relay.
 
-### 安装
+### Install
 
 ```
 go get -u github.com/qjpcpu/relay
 ```
 
-### 配置
-
-配置文件`~/.relay.conf`是yaml格式:
+or build from source
 
 ```
-- 
- name: 测试服务器
- cmd: ssh root@test.example.com
-- 
- name: 线上服务器1
- cmd: ssh work@online1.example.com
+git clone git@github.com:qjpcpu/relay.git
+cd relay && godep go build
+```
+
+### Configuration
+
+Default config file is `~/.relay.conf`, which is yaml format. Also you can specify config file with flag `-c`:
+
+```
 -
- name: 线上服务器2
- cmd: ssh work@online2.example.com
+ name: server1
+ cmd: ssh jason@10.0.2.2
+-
+ name: server2
+ cmd: ssh work@172.1.2.3
+-
+ name: connect to db
+ cmd: mysql -uroot -proot -h 127.0.0.1
+ alias: db
+-
+ name: show my ip
+ cmd: 'curl http://ip.cn'
+ alias: ip
 ```
 
-### 运行
+### Use relay
 
 ```
 relay
 ```
 
-![snapshot](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot.png)
+![snapshot](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot1.png)
 
 
-#### 快捷方式
+#### Shortcut
 
-直接执行上次执行的命令
+##### 1.run last command
 
 ```
 relay !
 ```
 
-命令历史查看执行
+##### 2.view relay history
 
 ```
 relay @
 ```
 
-快捷执行命令别名
+##### 3.run command by alias
 
-快速执行`~/.relay.conf`配置中的别名为fast的命令
+take `~/.relay.conf` as example, connect to mysql database:
 
 ```
 -
- name: 线上服务器2
- cmd: ssh work@online2.example.com
- alias: fast
+ name: connect to db
+ cmd: mysql -uroot -proot -h 127.0.0.1
+ alias: db
 ```
 
 ```
-relay fast
+relay db
 ```
 
+##### 4.run alias command with parameters
+
+```
+-
+ name: command with parameters
+ cmd: echo 'hello {{name}}'
+ alias: hi
+```
+
+```
+relay hi Jason
+```
