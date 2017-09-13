@@ -124,7 +124,7 @@ func (slist *SelectList) DrawUI() {
 
 	ls := termui.NewList()
 	ls.Items = strs
-	ls.ItemFgColor = termui.ColorYellow
+	ls.ItemFgColor = termui.ColorCyan
 	ls.BorderLabel = origTitle
 	ls.Height = termui.TermHeight()
 	termui.Body.AddRows(termui.NewRow(termui.NewCol(12, 0, ls)))
