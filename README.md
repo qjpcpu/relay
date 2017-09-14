@@ -87,6 +87,21 @@ confirm and run selected command: Enter
 select nothing and exit: q/C-c
 ```
 
+#### Bash Completion
+
+download `autocomplete/`
+For bash, add to ~/.bashrc
+
+```
+source autocomplete/bash_autocomplete
+```
+
+for zsh, add to ~/.zshrc
+
+```
+source autocomplete/zsh_autocomplete
+```
+
 #### Shortcut
 
 ##### 1.run last command

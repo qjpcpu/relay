@@ -42,6 +42,20 @@ func main() {
 	app.UsageText = "relay [global options] [command alias] [arguments...]"
 	app.HideHelp = true
 	app.HideVersion = true
+	app.EnableBashCompletion = true
+	app.BashComplete = func(c *cli.Context) {
+		// This will complete if no args are passed
+		if c.NArg() > 0 {
+			return
+		}
+		configFile = c.GlobalString("c")
+		commands := loadCommands()
+		for _, c := range commands {
+			if c.Alias != "" {
+				fmt.Println(c.Alias)
+			}
+		}
+	}
 	app.Before = func(c *cli.Context) error {
 		configFile = c.GlobalString("c")
 		return nil
