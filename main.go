@@ -84,10 +84,13 @@ func main() {
 }
 
 func runLastCommand(c *cli.Context) error {
-	commands := loadCommands()
 	cache, err := loadCache()
-	if err == nil && cache.LastIndex < len(commands) {
-		doRunCmd(c, commands, cache.LastIndex, cache.Data, cache)
+	if err == nil && len(cache.History) > 0 {
+		cmd := cache.History[len(cache.History)-1]
+		cache.History = append(cache.History, cmd)
+		saveCache(cache)
+		fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", cmd.Name, cmd.RealCommand)
+		execCommand(cmd.RealCommand)
 	} else {
 		return runRelayCommand(c)
 	}
@@ -125,34 +128,29 @@ func runRelayCommand(c *cli.Context) error {
 	cache, _ := loadCache()
 	// if user press q/C-c,exit now; else run the command selected.
 	if !selects.SelectNothing {
-		doRunCmd(c, commands, selects.SelectedIndex, populateData, cache)
+		currentIndex := selects.SelectedIndex
+		// fast run command like relay alias param1 param2 ...
+		if vnames := commands[currentIndex].Variables(); len(vnames) == c.NArg()-1 {
+			for i, vn := range vnames {
+				populateData[vn] = c.Args().Get(i + 1)
+			}
+		}
+		// populate command variables if exists
+		if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
+			populateData = populateCommand(&commands[currentIndex], populateData)
+			fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
+		} else {
+			fmt.Printf("Fill variables of command \033[1;33m%s\033[0m:\n", commands[currentIndex].Name)
+			populateData = populateCommand(&commands[currentIndex], populateData)
+			fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
+		}
+		// cache the comand as lastest command
+		cache.History = append(cache.History, commands[currentIndex])
+		saveCache(cache)
+		// run the command selected
+		execCommand(commands[currentIndex].RealCommand)
 	}
 	return nil
-}
-
-func doRunCmd(c *cli.Context, commands []Cmd, index int, populateData map[string]string, cache Cache) {
-	currentIndex := index
-	// fast run command like relay alias param1 param2 ...
-	if vnames := commands[currentIndex].Variables(); len(vnames) == c.NArg()-1 && len(populateData) == 0 {
-		for i, vn := range vnames {
-			populateData[vn] = c.Args().Get(i + 1)
-		}
-	}
-	// populate command variables if exists
-	if vlen := len(commands[currentIndex].Variables()); vlen == 0 || len(populateData) > 0 {
-		populateData = populateCommand(&commands[currentIndex], populateData)
-		fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", commands[currentIndex].Name, commands[currentIndex].RealCommand)
-	} else {
-		fmt.Printf("Fill variables of command \033[1;33m%s\033[0m:\n", commands[currentIndex].Name)
-		populateData = populateCommand(&commands[currentIndex], populateData)
-		fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
-	}
-	// cache the comand as lastest command
-	cache = Cache{LastIndex: currentIndex, Data: populateData, History: cache.History}
-	cache.History = append(cache.History, commands[currentIndex])
-	saveCache(cache)
-	// run the command selected
-	execCommand(commands[currentIndex].RealCommand)
 }
 
 func runHistoryCommand(c *cli.Context) error {
