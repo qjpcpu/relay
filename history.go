@@ -16,6 +16,7 @@ type Cache struct {
 	History []Cmd
 }
 
+// encrypt cache just keep direct tamper away, anyone run relay can still view the history
 var key = []byte("lootilcloocyrevasiyaleremeveileb")
 
 func loadCache() (c Cache, err error) {
@@ -34,7 +35,8 @@ func loadCache() (c Cache, err error) {
 }
 
 func saveCache(c Cache) {
-	hmax := 50
+	// keep 200 history
+	hmax := 200
 	if l := len(c.History); l > hmax {
 		c.History = c.History[(l - hmax):l]
 	}
