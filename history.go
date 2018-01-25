@@ -34,6 +34,27 @@ func loadCache() (c Cache, err error) {
 	return
 }
 
+func (cache *Cache) AppendHistory(c Cmd) {
+	index := -1
+	length := len(cache.History)
+	for i, cc := range cache.History {
+		if cc == c {
+			index = i
+			break
+		}
+	}
+	if index >= 0 {
+		for i := index; i < length-1; i++ {
+			cache.History[i] = cache.History[i+1]
+		}
+		if index != length-1 {
+			cache.History[length-1] = c
+		}
+	} else if index == -1 {
+		cache.History = append(cache.History, c)
+	}
+}
+
 func saveCache(c Cache) {
 	// keep 200 history
 	hmax := 200

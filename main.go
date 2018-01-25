@@ -101,7 +101,7 @@ func runLastCommand(c *cli.Context) error {
 	cache, err := loadCache()
 	if err == nil && len(cache.History) > 0 {
 		cmd := cache.History[len(cache.History)-1]
-		cache.History = append(cache.History, cmd)
+		cache.AppendHistory(cmd)
 		saveCache(cache)
 		fmt.Printf("Execute command: \033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", cmd.Name, cmd.RealCommand)
 		execCommand(cmd.RealCommand)
@@ -159,7 +159,7 @@ func runRelayCommand(c *cli.Context) error {
 			fmt.Printf("Execute commnad: \033[0;32m%s\033[0m\n", commands[currentIndex].RealCommand)
 		}
 		// cache the comand as lastest command
-		cache.History = append(cache.History, commands[currentIndex])
+		cache.AppendHistory(commands[currentIndex])
 		saveCache(cache)
 		// run the command selected
 		execCommand(commands[currentIndex].RealCommand)
