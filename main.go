@@ -19,6 +19,8 @@ type Cmd struct {
 	Name string `yaml:"name"`
 	// command shortcut, fast access
 	Alias string `yaml:"alias"`
+	// default values
+	Defaults map[string]string `yaml:"defaults"`
 	// real command
 	RealCommand string
 }
@@ -230,6 +232,10 @@ func execCommand(cmdstr string) {
 
 func (c Cmd) GetName() string {
 	return c.Name
+}
+
+func (c Cmd) Equals(c1 Cmd) bool {
+	return c.Cmd == c1.Cmd && c.Name == c1.Cmd && c.RealCommand == c1.RealCommand
 }
 
 func commands2Items(cs []Cmd) []string {

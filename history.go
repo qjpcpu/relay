@@ -38,7 +38,7 @@ func (cache *Cache) AppendHistory(c Cmd) {
 	index := -1
 	length := len(cache.History)
 	for i, cc := range cache.History {
-		if cc == c {
+		if cc.Equals(c) {
 			index = i
 			break
 		}

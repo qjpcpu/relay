@@ -138,6 +138,8 @@ relay db
  name: command with parameters
  cmd: echo 'hello {{name}}'
  alias: hi
+ defaults:
+  name: Jack
 ```
 
 ```

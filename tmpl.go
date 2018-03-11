@@ -27,6 +27,12 @@ func (cmd *Cmd) Populate(data map[string]string) {
 	if err != nil {
 		return
 	}
+	for _, vn := range cmd.Variables() {
+		v1, ok1 := data[vn]
+		if v2, ok2 := cmd.Defaults[vn]; ok2 && v2 != "" && (!ok1 || v1 == "") {
+			data[vn] = v2
+		}
+	}
 	cmd.RealCommand = tmpl.Render(data)
 }
 
@@ -42,7 +48,11 @@ func populateCommand(cmd *Cmd, datas ...map[string]string) map[string]string {
 	data := make(map[string]string)
 	reader := bufio.NewReader(os.Stdin)
 	for _, v := range variables {
-		fmt.Printf("%s: ", v)
+		if defaultVal := cmd.Defaults[v]; defaultVal != "" {
+			fmt.Printf("%s(%s): ", v, defaultVal)
+		} else {
+			fmt.Printf("%s: ", v)
+		}
 		text, _ := reader.ReadString('\n')
 		text = strings.Replace(text, "\n", "", -1)
 		data[v] = strings.TrimSpace(text)
