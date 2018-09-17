@@ -201,13 +201,13 @@ func runHistoryCommand(c *cli.Context) error {
 func loadCommands() []Cmd {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		fmt.Printf("faild to load %s", configFile)
+		fmt.Printf("faild to load %s\n", configFile)
 		os.Exit(1)
 	}
 	var commands []Cmd
 	err = yaml.Unmarshal(data, &commands)
 	if err != nil {
-		fmt.Printf("fail to parse %s", configFile)
+		fmt.Printf("fail to parse %s\n", configFile)
 		os.Exit(1)
 	}
 	for i, cmd := range commands {
