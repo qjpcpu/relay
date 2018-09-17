@@ -1,0 +1,49 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "qY5/cRU8AkkkccWt3W8NyFJQO50=",
+			"path": "github.com/gizak/termui",
+			"revision": "202925a536c7febe22698792a2b6de68edb2726d",
+			"revisionTime": "2016-07-11T14:51:34Z"
+		},
+		{
+			"checksumSHA1": "OjjL/hCz0GDh/c0U0w+c8glE7OE=",
+			"path": "github.com/hoisie/mustache",
+			"revision": "6375acf62c69d9d3ad20fd0599d82ca94ea12284",
+			"revisionTime": "2016-08-04T23:50:33Z"
+		},
+		{
+			"checksumSHA1": "KGCifxxR5cm2gz94i2iha+RIZlk=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb",
+			"revisionTime": "2018-04-08T05:53:51Z"
+		},
+		{
+			"checksumSHA1": "L3leymg2RT8hFl5uL+5KP/LpBkg=",
+			"path": "github.com/mitchellh/go-wordwrap",
+			"revision": "ad45545899c7b13c020ea92b2072220eefad42b8",
+			"revisionTime": "2015-03-14T17:03:34Z"
+		},
+		{
+			"checksumSHA1": "ymd32uFjzdvI2g1f1RiDc2eebUc=",
+			"path": "github.com/nsf/termbox-go",
+			"revision": "0723e7c3d0a317dea811f0fbe4d6edd81908c971",
+			"revisionTime": "2016-07-18T14:06:19Z"
+		},
+		{
+			"checksumSHA1": "8YLoOB7KeQqUSPvlBynceGY4xOc=",
+			"path": "github.com/urfave/cli",
+			"revision": "f017f86fccc5a039a98f23311f34fdf78b014f78",
+			"revisionTime": "2017-08-13T14:59:49Z"
+		},
+		{
+			"checksumSHA1": "ZSWoOPUNRr5+3dhkLK3C4cZAQPk=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183",
+			"revisionTime": "2018-03-28T19:50:20Z"
+		}
+	],
+	"rootPath": "github.com/qjpcpu/relay"
+}
