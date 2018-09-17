@@ -13,7 +13,7 @@ or build from source
 
 ```
 git clone git@github.com:qjpcpu/relay.git
-cd relay && godep go build
+cd relay && go build
 ```
 
 or download binary file
