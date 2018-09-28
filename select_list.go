@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/gizak/termui"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -109,6 +111,7 @@ func (slist *SelectList) DrawUI() {
 	searchObj.SearchMode = false
 	searchObj.CommandSize = len(slist.Items)
 	searchObj.SearchTitle = "Search: "
+
 	origTitle := "Help:(1: <Enter>Confirm 2: </|C-s>Search 3: <ESC|q|C-c>Exit)"
 	err := termui.Init()
 	if err != nil {
@@ -142,6 +145,19 @@ func (slist *SelectList) DrawUI() {
 		ls.Items = formatCommands(slist.shortItems, slist.SelectedIndex)
 		termui.Render(termui.Body)
 	}
+
+	// time writer for fast select by number
+	timeWriter := NewTimeWriter(300 * time.Millisecond)
+	defer timeWriter.Stop()
+	go func() {
+		for data := range timeWriter.DataChan() {
+			if !searchObj.SearchMode && string(data) != "" {
+				if idx, err := strconv.Atoi(string(data)); err == nil {
+					repaint(idx - 1 - slist.SelectedIndex)
+				}
+			}
+		}
+	}()
 
 	doSearch := func() int {
 		searchObj.MatchedIndexList = []int{}
@@ -289,12 +305,19 @@ func (slist *SelectList) DrawUI() {
 		if !ok {
 			return
 		}
-		if (kb.KeyStr == "/" || kb.KeyStr == "C-s") && !searchObj.SearchMode {
-			searchObj.SearchMode = true
-			searchObj.Reset()
-			ls.BorderLabel = searchObj.Title()
-			repaint(0)
-		} else if searchObj.SearchMode {
+		if !searchObj.SearchMode {
+			switch {
+			// enter search mode
+			case kb.KeyStr == "/" || kb.KeyStr == "C-s":
+				searchObj.SearchMode = true
+				searchObj.Reset()
+				ls.BorderLabel = searchObj.Title()
+				repaint(0)
+			case isNumber(kb.KeyStr):
+				timeWriter.Write([]byte(kb.KeyStr))
+			}
+
+		} else {
 			if kb.KeyStr == "C-8" {
 				// delete char
 				_, size := utf8.DecodeLastRuneInString(searchObj.QueryStr)
@@ -311,6 +334,15 @@ func (slist *SelectList) DrawUI() {
 		}
 	})
 	termui.Loop()
+}
+
+func isNumber(num string) bool {
+	for i := 0; i <= 9; i++ {
+		if strconv.Itoa(i) == num {
+			return true
+		}
+	}
+	return false
 }
 
 // format command for UI display
