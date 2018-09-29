@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -146,14 +145,25 @@ func (slist *SelectList) DrawUI() {
 		termui.Render(termui.Body)
 	}
 
-	// time writer for fast select by number
-	timeWriter := NewTimeWriter(300 * time.Millisecond)
-	defer timeWriter.Stop()
+	// term writer for fast select by number
+	termWriter := NewTermWriter()
+	termWriter.AddTerm("0gg", ``, "gg")
+	termWriter.AddTerm("gg", `\d+`, "gg")
+	termWriter.AddTerm("G", ``, "G")
+	defer termWriter.Stop()
 	go func() {
-		for data := range timeWriter.DataChan() {
-			if !searchObj.SearchMode && string(data) != "" {
-				if idx, err := strconv.Atoi(string(data)); err == nil {
-					repaint(idx - 1 - slist.SelectedIndex)
+		for term := range termWriter.DataChan() {
+			if !searchObj.SearchMode && term.IsMatched() {
+				switch term.Name {
+				case "0gg":
+					repaint(-slist.SelectedIndex)
+				case "gg":
+					if idx, err := strconv.Atoi(strings.TrimSuffix(term.Text, "gg")); err == nil {
+						repaint(idx - 1 - slist.SelectedIndex)
+					}
+				case "G":
+					repaint(-slist.SelectedIndex - 1)
+
 				}
 			}
 		}
@@ -285,14 +295,16 @@ func (slist *SelectList) DrawUI() {
 	})
 	termui.Handle("/sys/kbd/G", func(termui.Event) {
 		if !searchObj.SearchMode {
-			repaint(-slist.SelectedIndex - 1)
+			//repaint(-slist.SelectedIndex - 1)
+			termWriter.Write([]byte("G"))
 		} else {
 			appendQuery("G")
 		}
 	})
 	termui.Handle("/sys/kbd/g", func(termui.Event) {
 		if !searchObj.SearchMode {
-			repaint(-slist.SelectedIndex)
+			//			repaint(-slist.SelectedIndex)
+			termWriter.Write([]byte("g"))
 		} else {
 			appendQuery("g")
 		}
@@ -314,7 +326,7 @@ func (slist *SelectList) DrawUI() {
 				ls.BorderLabel = searchObj.Title()
 				repaint(0)
 			case isNumber(kb.KeyStr):
-				timeWriter.Write([]byte(kb.KeyStr))
+				termWriter.Write([]byte(kb.KeyStr))
 			}
 
 		} else {
@@ -339,6 +351,17 @@ func (slist *SelectList) DrawUI() {
 func isNumber(num string) bool {
 	for i := 0; i <= 9; i++ {
 		if strconv.Itoa(i) == num {
+			return true
+		}
+	}
+	return false
+}
+func arrayContains(arr []string, elem string) bool {
+	if elem == "" {
+		return false
+	}
+	for _, a := range arr {
+		if a == elem {
 			return true
 		}
 	}

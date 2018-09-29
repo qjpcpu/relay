@@ -79,7 +79,8 @@ keybinding in select list:
 
 ```
 move previous/next command: j/k(like vim) or C-n/C-p(like emacs)  or arrow up/down
-jump first/last command: g/G(like vim)
+jump to first/last command: gg/G(like vim)
+jump to line: lineno+gg(like vim)
 scroll page up/down: C-d/C-u(like vim)
 search mode: /(like vim), C-s(like emacs)
 move prev/next in search mode: C-n/C-p
