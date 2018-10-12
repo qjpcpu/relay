@@ -39,8 +39,8 @@ func (so *SearchObj) Reset() {
 func (so *SearchObj) Highlight(raw string, background bool) string {
 	qs := strings.ToLower(so.QueryStr)
 	raw1 := strings.ToLower(raw)
-	if so.SearchMode && so.QueryStr != "" && strings.Contains(raw1, qs) {
-		start := strings.Index(raw1, qs)
+	if so.SearchMode && so.QueryStr != "" && FuzzyContains(raw1, qs) {
+		start, matched := FuzzyIndex(raw1, qs)
 		if start < 0 {
 			if background {
 				return fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
@@ -48,7 +48,7 @@ func (so *SearchObj) Highlight(raw string, background bool) string {
 				return raw
 			}
 		}
-		end := start + len(qs)
+		end := start + len(matched)
 		raw1 = ""
 		if start > 0 {
 			raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[0:start])
@@ -174,7 +174,7 @@ func (slist *SelectList) DrawUI() {
 		searchObj.SelfIndexInList = 0
 		if searchObj.QueryStr != "" {
 			for i, c := range slist.Items {
-				if strings.Contains(strings.ToLower(c), strings.ToLower(searchObj.QueryStr)) {
+				if FuzzyContains(strings.ToLower(c), strings.ToLower(searchObj.QueryStr)) {
 					searchObj.MatchedIndexList = append(searchObj.MatchedIndexList, i)
 				}
 			}

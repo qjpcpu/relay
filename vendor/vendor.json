@@ -27,6 +27,12 @@
 			"revisionTime": "2015-03-14T17:03:34Z"
 		},
 		{
+			"checksumSHA1": "qjiYZXFYLaKJrpDezkJUme038GA=",
+			"path": "github.com/mozillazg/go-pinyin",
+			"revision": "b950aaffc7bf031ae4b8e7759eaff767b32c3214",
+			"revisionTime": "2018-08-05T13:23:45Z"
+		},
+		{
 			"checksumSHA1": "ymd32uFjzdvI2g1f1RiDc2eebUc=",
 			"path": "github.com/nsf/termbox-go",
 			"revision": "0723e7c3d0a317dea811f0fbe4d6edd81908c971",
