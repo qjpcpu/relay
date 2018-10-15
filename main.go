@@ -131,20 +131,17 @@ func runRelayCommand(c *cli.Context) error {
 			}
 		}
 	}
-	selects := &SelectList{
-		SelectedIndex: currentIndex,
-		Items:         commands2Items(commands),
-		SelectNothing: false,
-	}
+	selects := NewSelectList(currentIndex, commands2Items(commands))
+
 	// if no shortcut specify, show selection UI
 	if !shortcut {
-		selects.DrawUI()
+		selects.Show()
 	}
 	populateData := make(map[string]string)
 	cache, _ := loadCache()
 	// if user press q/C-c,exit now; else run the command selected.
-	if !selects.SelectNothing {
-		currentIndex := selects.SelectedIndex
+	if !selects.IsSelectNothing() {
+		currentIndex = selects.Selected()
 		// fast run command like relay alias param1 param2 ...
 		if vnames := commands[currentIndex].Variables(); len(vnames) == c.NArg()-1 {
 			for i, vn := range vnames {
@@ -185,14 +182,10 @@ func runHistoryCommand(c *cli.Context) error {
 		history[len(cache.History)-i-1] = c.RealCommand
 		history_names[len(cache.History)-i-1] = c.Name + ": " + c.RealCommand
 	}
-	selects := &SelectList{
-		SelectedIndex: 0,
-		Items:         history_names,
-		SelectNothing: false,
-	}
-	selects.DrawUI()
-	if !selects.SelectNothing {
-		execCommand(history[selects.SelectedIndex])
+	selects := NewSelectList(0, history_names)
+	selects.Show()
+	if !selects.IsSelectNothing() {
+		execCommand(history[selects.Selected()])
 	}
 	return nil
 }
