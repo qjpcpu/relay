@@ -78,8 +78,9 @@ func (sl *SelectList) InNormMode() bool {
 // move cursor by offset and repaint
 func (sl *SelectList) repaint(offset int) {
 	nIndex := offset + sl.selectedIndex
+	size := len(sl.items)
 	if nIndex < 0 {
-		nIndex += len(sl.items)
+		nIndex += (1 - nIndex/size) * size
 	}
 	sl.selectedIndex = nIndex % len(sl.items)
 	sl.uilist.Items = sl.formatCommands()
@@ -376,6 +377,7 @@ func (so *SearchObj) Title() string {
 		return fmt.Sprintf("%s%s     Press ESC exit search", so.SearchTitle, so.QueryStr)
 	}
 }
+
 func (so *SearchObj) Next(current int) int {
 	if so.SelectedResultIndex >= 0 && so.SelectedResultIndex < len(so.SearchResultsIndices) {
 		so.SelectedResultIndex = (so.SelectedResultIndex + 1) % len(so.SearchResultsIndices)
