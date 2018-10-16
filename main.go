@@ -131,7 +131,7 @@ func runRelayCommand(c *cli.Context) error {
 			}
 		}
 	}
-	selects := NewSelectList(currentIndex, commands2Items(commands))
+	selects := NewSelectListWithHints(currentIndex, commands2Items(commands), commands2Hints(commands))
 
 	// if no shortcut specify, show selection UI
 	if !shortcut {
@@ -235,6 +235,14 @@ func commands2Items(cs []Cmd) []string {
 	var list []string
 	for _, c := range cs {
 		list = append(list, c.Name)
+	}
+	return list
+}
+
+func commands2Hints(cs []Cmd) []string {
+	var list []string
+	for _, c := range cs {
+		list = append(list, c.Cmd)
 	}
 	return list
 }

@@ -19,6 +19,8 @@ const (
 type SelectList struct {
 	// all items user can select from
 	items []string
+	// hints
+	hints []string
 	// selected item index
 	selectedIndex int
 	// whether nothing selected
@@ -44,6 +46,7 @@ func NewSelectList(initialIndex int, items []string) *SelectList {
 	ls := &SelectList{
 		selectedIndex: initialIndex,
 		items:         items,
+		hints:         make([]string, len(items)),
 		selectNothing: false,
 		maxLine:       20,
 		mode:          ModeNorm,
@@ -57,6 +60,14 @@ func NewSelectList(initialIndex int, items []string) *SelectList {
 		return ls.selectedIndex
 	}
 	return ls
+}
+
+func NewSelectListWithHints(initialIndex int, items, hints []string) *SelectList {
+	list := NewSelectList(initialIndex, items)
+	for i := range items {
+		list.hints[i] = hints[i]
+	}
+	return list
 }
 
 // IsSelectNothing true: exit with nothing selected
@@ -341,41 +352,52 @@ func (sl *SelectList) resetSearch() {
 }
 
 // render raw string as highlight format
-func (sl *SelectList) Highlight(raw string, background bool) string {
+func (sl *SelectList) Highlight(raw string, hint string, background bool) string {
 	so := sl.search
 	qs := strings.ToLower(so.QueryStr)
 	raw1 := strings.ToLower(raw)
-	if sl.InSearchMode() && FuzzyContains(raw1, qs) {
-		start, matched := FuzzyIndex(raw1, qs)
-		if start < 0 {
-			if background {
-				return fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
-			} else {
-				return raw
+	var result string
+	for loop := true; loop; loop = false {
+		// search mode
+		if sl.InSearchMode() && FuzzyContains(raw1, qs) {
+			start, matched := FuzzyIndex(raw1, qs)
+			if start < 0 {
+				if background {
+					result = fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
+				} else {
+					result = raw
+				}
+				break
 			}
+			end := start + len(matched)
+			raw1 = ""
+			if start > 0 {
+				raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[0:start])
+			}
+			raw1 += fmt.Sprintf("[%s](fg-white,fg-bold,bg-green)", raw[start:end])
+			if end < len(raw) {
+				raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[end:len(raw)])
+			}
+			if background {
+				raw1 = strings.Replace(raw1, "fg-magenta", "fg-blue", -1)
+			} else {
+				raw1 = strings.Replace(raw1, ",bg-green", "", -1)
+			}
+			result = raw1
+			break
 		}
-		end := start + len(matched)
-		raw1 = ""
-		if start > 0 {
-			raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[0:start])
-		}
-		raw1 += fmt.Sprintf("[%s](fg-white,fg-bold,bg-green)", raw[start:end])
-		if end < len(raw) {
-			raw1 += fmt.Sprintf("[%s](fg-magenta,bg-green)", raw[end:len(raw)])
-		}
-		if !background {
-			raw1 = strings.Replace(raw1, ",bg-green", "", -1)
-		} else {
-			raw1 = strings.Replace(raw1, "fg-magenta", "fg-blue", -1)
-		}
-		return raw1
-	} else {
+		// normal display
 		if background {
-			return fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
+			result = fmt.Sprintf("[%s](fg-blue,bg-green,fg-underline) [%s](fg-white)", raw, hint)
 		} else {
-			return raw
+			result = raw
 		}
+
 	}
+	if hint != "" && background {
+		result += fmt.Sprintf("  [%s](fg-white)", hint)
+	}
+	return result
 }
 
 func (so *SearchObj) Title() string {
@@ -476,9 +498,9 @@ func (slist *SelectList) formatCommands() []string {
 				fmtI = "%03d"
 			}
 			if i == slist.selectedIndex {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, true)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, slist.hints[i], true)))
 			} else {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, false)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, "", false)))
 			}
 			showIndex++
 		}
