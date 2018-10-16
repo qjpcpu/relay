@@ -1,9 +1,9 @@
 package main
 
 import (
-	"strings"
-
 	"github.com/mozillazg/go-pinyin"
+	"strings"
+	"unicode/utf8"
 )
 
 func FuzzyContains(s string, substr string) bool {
@@ -18,45 +18,54 @@ func FuzzyIndex(s string, substr string) (int, string) {
 	if idx := strings.Index(s, substr); idx >= 0 {
 		return idx, substr
 	}
-	return PinyinContains(s, substr)
+	idx, size := PinyinContains(s, substr)
+	if idx >= 0 {
+		return idx, s[idx : idx+size]
+	}
+	return -1, ""
 }
 
-func ToPinyin(raw string) (string, [][2]int) {
+func ToPinyin(raw string) (string, [][3]int) {
 	args := pinyin.NewArgs()
-	hanzi := make([][2]int, 0)
+	// [][3]int{转换后拼音字符串起始位置,转换后拼音长度,转换前字符数}
+	hanzi := make([][3]int, 0)
 	var text string
 	var idx int
 	for _, r := range raw {
 		py := pinyin.SinglePinyin(r, args)
 		if len(py) > 0 {
 			text += py[0]
-			hanzi = append(hanzi, [2]int{idx, len(py[0])})
+			hanzi = append(hanzi, [3]int{
+				idx,
+				len(py[0]),
+				utf8.RuneLen(r),
+			})
 			idx += len(py[0])
 		} else {
 			text += string(r)
-			idx++
+			idx += len(string(r))
 		}
 	}
 	return text, hanzi
 }
 
-func PinyinContains(raw string, term string) (int, string) {
+// PinyinContains return matched substr index and length
+func PinyinContains(raw string, term string) (int, int) {
 	py, words := ToPinyin(raw)
 	term, _ = ToPinyin(term)
 	if !strings.Contains(py, term) {
-		return -1, ""
+		return -1, 0
 	}
+	py_bytes, term_bytes := []byte(py), []byte(term)
 	for {
-		idx := strings.Index(py, term)
+		idx := IndexBytes(py_bytes, term_bytes)
 		if idx < 0 {
 			break
 		}
 		valid := true
 		for _, w := range words {
 			if idx > w[0] && idx < w[0]+w[1] {
-				r := []rune(py)
-				r[idx] = '\r'
-				py = string(r)
+				py_bytes[idx] = 0
 				valid = false
 				break
 			}
@@ -75,16 +84,30 @@ func PinyinContains(raw string, term string) (int, string) {
 					break
 				}
 				if idx > w[0] {
-					start_offset = start_offset + w[1] - 1
-					end_offset = end_offset + w[1] - 1
+					start_offset = start_offset + w[1] - w[2]
+					end_offset = end_offset + w[1] - w[2]
 				} else if w[0]+w[1] <= end {
-					end_offset = end_offset + w[1] - 1
+					end_offset = end_offset + w[1] - w[2]
 				}
 			}
-			b := []rune(raw)
-			matched := string(b[idx-start_offset : end-end_offset])
-			return strings.Index(raw, matched), matched
+			return idx - start_offset, end - end_offset - (idx - start_offset)
 		}
 	}
-	return -1, ""
+	return -1, 0
+}
+
+func IndexBytes(s []byte, term []byte) int {
+	for i := range s {
+		found := true
+		for j, tr := range term {
+			if s[i+j] != tr {
+				found = false
+				break
+			}
+		}
+		if found {
+			return i
+		}
+	}
+	return -1
 }
