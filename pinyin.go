@@ -97,6 +97,7 @@ func PinyinContains(raw string, term string) (int, int) {
 }
 
 func IndexBytes(s []byte, term []byte) int {
+	// TODO: use something like kmp someday
 	for i := range s {
 		found := true
 		for j, tr := range term {
