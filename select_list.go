@@ -105,11 +105,9 @@ func (slist *SelectList) createUI() {
 func (sl *SelectList) doSearch() int {
 	sl.search.SearchResultsIndices = []int{}
 	sl.search.SelectedResultIndex = 0
-	if sl.search.QueryStr != "" {
-		for i, c := range sl.items {
-			if FuzzyContains(strings.ToLower(c), strings.ToLower(sl.search.QueryStr)) {
-				sl.search.SearchResultsIndices = append(sl.search.SearchResultsIndices, i)
-			}
+	for i, c := range sl.items {
+		if FuzzyContains(strings.ToLower(c), strings.ToLower(sl.search.QueryStr)) {
+			sl.search.SearchResultsIndices = append(sl.search.SearchResultsIndices, i)
 		}
 	}
 	sl.uilist.BorderLabel = sl.search.Title()
@@ -125,7 +123,7 @@ func (sl *SelectList) appendQuery(qs string) {
 
 func (sl *SelectList) reset() {
 	sl.mode = ModeNorm
-	sl.search.Reset()
+	sl.resetSearch()
 	sl.uilist.BorderLabel = sl.title
 }
 
@@ -266,7 +264,7 @@ func (slist *SelectList) handleKeyboardEvents() {
 			// enter search mode
 			case kb.KeyStr == "/" || kb.KeyStr == "C-s":
 				slist.mode = ModeSearch
-				slist.search.Reset()
+				slist.resetSearch()
 				slist.uilist.BorderLabel = slist.search.Title()
 				slist.repaint(0)
 			case isNumber(kb.KeyStr):
@@ -326,10 +324,13 @@ type SearchObj struct {
 	SearchTitle string
 }
 
-func (so *SearchObj) Reset() {
-	so.SearchResultsIndices = []int{}
-	so.SelectedResultIndex = 0
-	so.QueryStr = ""
+func (sl *SelectList) resetSearch() {
+	sl.search.SearchResultsIndices = make([]int, len(sl.items))
+	sl.search.SelectedResultIndex = 0
+	sl.search.QueryStr = ""
+	for i := range sl.items {
+		sl.search.SearchResultsIndices[i] = i
+	}
 }
 
 // render raw string as highlight format
@@ -337,7 +338,7 @@ func (sl *SelectList) Highlight(raw string, background bool) string {
 	so := sl.search
 	qs := strings.ToLower(so.QueryStr)
 	raw1 := strings.ToLower(raw)
-	if sl.InSearchMode() && so.QueryStr != "" && FuzzyContains(raw1, qs) {
+	if sl.InSearchMode() && FuzzyContains(raw1, qs) {
 		start, matched := FuzzyIndex(raw1, qs)
 		if start < 0 {
 			if background {
