@@ -331,6 +331,9 @@ func (sl *SelectList) resetSearch() {
 	for i := range sl.items {
 		sl.search.SearchResultsIndices[i] = i
 	}
+	if sl.selectedIndex >= 0 && sl.selectedIndex < len(sl.items) {
+		sl.search.SelectedResultIndex = sl.selectedIndex
+	}
 }
 
 // render raw string as highlight format
