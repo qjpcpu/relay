@@ -3,7 +3,7 @@ relay
 
 `relay` is a command collector and trigger. Delegate all your high-frequency commands to relay, then use it conviencely.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/OLfZFI7A77M" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/OLfZFI7A77M/0.jpg)](https://youtu.be/OLfZFI7A77M "relay")
 
 ### Install
 
