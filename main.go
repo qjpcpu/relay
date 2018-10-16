@@ -192,16 +192,18 @@ func runHistoryCommand(c *cli.Context) error {
 
 // load command from config file
 func loadCommands() []Cmd {
-	data, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		fmt.Printf("faild to load %s\n", configFile)
-		os.Exit(1)
-	}
 	var commands []Cmd
-	err = yaml.Unmarshal(data, &commands)
-	if err != nil {
-		fmt.Printf("fail to parse %s\n", configFile)
-		os.Exit(1)
+	for loop := true; loop; loop = false {
+		data, err := ioutil.ReadFile(configFile)
+		if err != nil {
+			commands = bootstrapCommands()
+			break
+		}
+		err = yaml.Unmarshal(data, &commands)
+		if err != nil {
+			fmt.Printf("fail to parse %s\n", configFile)
+			os.Exit(1)
+		}
 	}
 	for i, cmd := range commands {
 		commands[i].RealCommand = cmd.Cmd
@@ -245,4 +247,17 @@ func commands2Hints(cs []Cmd) []string {
 		list = append(list, c.Cmd)
 	}
 	return list
+}
+
+func bootstrapCommands() []Cmd {
+	data := []byte(`- name: edit ~/.relay.conf
+  cmd: vim ~/.relay.conf
+- name: login dev server on aws
+  cmd: ssh root@8.8.8.8
+- name: view system info
+  cmd: top`)
+	var cmds []Cmd
+	yaml.Unmarshal(data, &cmds)
+	ioutil.WriteFile(configFile, data, 0644)
+	return cmds
 }

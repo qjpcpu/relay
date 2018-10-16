@@ -388,7 +388,7 @@ func (sl *SelectList) Highlight(raw string, hint string, background bool) string
 		}
 		// normal display
 		if background {
-			result = fmt.Sprintf("[%s](fg-blue,bg-green,fg-underline) [%s](fg-white)", raw, hint)
+			result = fmt.Sprintf("[%s](fg-blue,bg-green,fg-underline)", raw)
 		} else {
 			result = raw
 		}
@@ -482,7 +482,6 @@ func (slist *SelectList) formatCommands() []string {
 		}
 		end = start + slist.maxLine - 1
 	}
-	var showIndex int
 	for i, c := range slist.items {
 		j, ok := matchedMap[i]
 		if slist.InSearchMode() {
@@ -498,11 +497,10 @@ func (slist *SelectList) formatCommands() []string {
 				fmtI = "%03d"
 			}
 			if i == slist.selectedIndex {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, slist.hints[i], true)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, slist.Highlight(c, slist.hints[i], true)))
 			} else {
-				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", showIndex+1, slist.Highlight(c, "", false)))
+				strs = append(strs, fmt.Sprintf("["+fmtI+"] %s", i+1, slist.Highlight(c, "", false)))
 			}
-			showIndex++
 		}
 	}
 	return strs
