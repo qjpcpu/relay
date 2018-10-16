@@ -41,7 +41,7 @@ func NewSelectList(initialIndex int, items []string) *SelectList {
 	termWriter.AddTerm("0gg", ``, "gg")
 	termWriter.AddTerm("gg", `\d+`, "gg")
 	termWriter.AddTerm("G", ``, "G")
-	return &SelectList{
+	ls := &SelectList{
 		selectedIndex: initialIndex,
 		items:         items,
 		selectNothing: false,
@@ -53,6 +53,10 @@ func NewSelectList(initialIndex int, items []string) *SelectList {
 		},
 		title: "Help:(1: <Enter>Confirm 2: </|C-s>Search 3: <ESC|q|C-c>Exit)",
 	}
+	ls.search.getOriginalSelectedIndex = func() int {
+		return ls.selectedIndex
+	}
+	return ls
 }
 
 // IsSelectNothing true: exit with nothing selected
@@ -102,7 +106,7 @@ func (slist *SelectList) createUI() {
 	termui.Render(termui.Body)
 }
 
-func (sl *SelectList) doSearch() int {
+func (sl *SelectList) doSearch() {
 	sl.search.SearchResultsIndices = []int{}
 	sl.search.SelectedResultIndex = 0
 	for i, c := range sl.items {
@@ -111,9 +115,7 @@ func (sl *SelectList) doSearch() int {
 		}
 	}
 	sl.uilist.BorderLabel = sl.search.Title()
-	offset := sl.search.Offset(sl.selectedIndex)
-	sl.repaint(offset)
-	return offset
+	sl.repaint(sl.search.Current())
 }
 
 func (sl *SelectList) appendQuery(qs string) {
@@ -156,14 +158,14 @@ func (slist *SelectList) handleKeyboardEvents() {
 		if slist.InNormMode() {
 			slist.repaint(1)
 		} else {
-			offset := slist.search.Next(slist.selectedIndex)
+			offset := slist.search.Next()
 			slist.uilist.BorderLabel = slist.search.Title()
 			slist.repaint(offset)
 		}
 	})
 	termui.Handle("/sys/kbd/C-n", func(termui.Event) {
 		if slist.InSearchMode() {
-			offset := slist.search.Next(slist.selectedIndex)
+			offset := slist.search.Next()
 			slist.uilist.BorderLabel = slist.search.Title()
 			slist.repaint(offset)
 		} else {
@@ -172,7 +174,7 @@ func (slist *SelectList) handleKeyboardEvents() {
 	})
 	termui.Handle("/sys/kbd/<down>", func(termui.Event) {
 		if slist.InSearchMode() {
-			offset := slist.search.Next(slist.selectedIndex)
+			offset := slist.search.Next()
 			slist.uilist.BorderLabel = slist.search.Title()
 			slist.repaint(offset)
 		} else {
@@ -188,7 +190,7 @@ func (slist *SelectList) handleKeyboardEvents() {
 	})
 	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
 		if slist.InSearchMode() {
-			offset := slist.search.Prev(slist.selectedIndex)
+			offset := slist.search.Prev()
 			slist.uilist.BorderLabel = slist.search.Title()
 			slist.repaint(offset)
 		} else {
@@ -197,7 +199,7 @@ func (slist *SelectList) handleKeyboardEvents() {
 	})
 	termui.Handle("/sys/kbd/<up>", func(termui.Event) {
 		if slist.InSearchMode() {
-			offset := slist.search.Prev(slist.selectedIndex)
+			offset := slist.search.Prev()
 			slist.uilist.BorderLabel = slist.search.Title()
 			slist.repaint(offset)
 		} else {
@@ -322,6 +324,8 @@ type SearchObj struct {
 	QueryStr string
 	// base title displayed when searching
 	SearchTitle string
+
+	getOriginalSelectedIndex func() int
 }
 
 func (sl *SelectList) resetSearch() {
@@ -382,25 +386,25 @@ func (so *SearchObj) Title() string {
 	}
 }
 
-func (so *SearchObj) Next(current int) int {
+func (so *SearchObj) Next() int {
 	if so.SelectedResultIndex >= 0 && so.SelectedResultIndex < len(so.SearchResultsIndices) {
 		so.SelectedResultIndex = (so.SelectedResultIndex + 1) % len(so.SearchResultsIndices)
-		return so.SearchResultsIndices[so.SelectedResultIndex] - current
+		return so.SearchResultsIndices[so.SelectedResultIndex] - so.getOriginalSelectedIndex()
 	}
 	return 0
 }
 
-func (so *SearchObj) Offset(current int) int {
+func (so *SearchObj) Current() int {
 	if so.SelectedResultIndex >= 0 && so.SelectedResultIndex < len(so.SearchResultsIndices) {
-		return so.SearchResultsIndices[so.SelectedResultIndex] - current
+		return so.SearchResultsIndices[so.SelectedResultIndex] - so.getOriginalSelectedIndex()
 	}
 	return 0
 }
 
-func (so *SearchObj) Prev(current int) int {
+func (so *SearchObj) Prev() int {
 	if so.SelectedResultIndex >= 0 && so.SelectedResultIndex < len(so.SearchResultsIndices) {
 		so.SelectedResultIndex = (so.SelectedResultIndex - 1 + len(so.SearchResultsIndices)) % len(so.SearchResultsIndices)
-		return so.SearchResultsIndices[so.SelectedResultIndex] - current
+		return so.SearchResultsIndices[so.SelectedResultIndex] - so.getOriginalSelectedIndex()
 	}
 	return 0
 }
