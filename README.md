@@ -3,7 +3,7 @@ relay
 
 `relay` is a command collector and trigger. Delegate all your high-frequency commands to relay, then use it conviencely.
 
-[![relay](https://raw.githubusercontent.com/qjpcpu/relay/master/snapshot1.png)](https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.mp4)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/OLfZFI7A77M" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 ### Install
 
