@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/mozillazg/go-pinyin"
 	"strings"
+
+	"github.com/mozillazg/go-pinyin"
 )
 
 func FuzzyContains(s string, substr string) bool {
@@ -52,7 +53,7 @@ func PinyinContains(raw string, term string) (int, string) {
 		}
 		valid := true
 		for _, w := range words {
-			if idx > w[0] && idx < w[0]+w[1]-1 {
+			if idx > w[0] && idx < w[0]+w[1] {
 				r := []rune(py)
 				r[idx] = '\r'
 				py = string(r)
