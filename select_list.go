@@ -141,6 +141,34 @@ func (sl *SelectList) reset() {
 }
 
 func (slist *SelectList) handleKeyboardEvents() {
+	moveNext := func(termui.Event) {
+		if slist.InSearchMode() {
+			offset := slist.search.Next()
+			slist.uilist.BorderLabel = slist.search.Title()
+			slist.repaint(offset)
+		} else {
+			slist.repaint(1)
+		}
+	}
+	movePrev := func(termui.Event) {
+		if slist.InSearchMode() {
+			offset := slist.search.Prev()
+			slist.uilist.BorderLabel = slist.search.Title()
+			slist.repaint(offset)
+		} else {
+			slist.repaint(-1)
+		}
+	}
+	pageDown := func(termui.Event) {
+		if !slist.InSearchMode() {
+			slist.repaint(10)
+		}
+	}
+	pageUp := func(termui.Event) {
+		if !slist.InSearchMode() {
+			slist.repaint(-10)
+		}
+	}
 	termui.Handle("/sys/kbd/<enter>", func(termui.Event) {
 		termui.StopLoop()
 	})
@@ -174,24 +202,8 @@ func (slist *SelectList) handleKeyboardEvents() {
 			slist.repaint(offset)
 		}
 	})
-	termui.Handle("/sys/kbd/C-n", func(termui.Event) {
-		if slist.InSearchMode() {
-			offset := slist.search.Next()
-			slist.uilist.BorderLabel = slist.search.Title()
-			slist.repaint(offset)
-		} else {
-			slist.repaint(1)
-		}
-	})
-	termui.Handle("/sys/kbd/<down>", func(termui.Event) {
-		if slist.InSearchMode() {
-			offset := slist.search.Next()
-			slist.uilist.BorderLabel = slist.search.Title()
-			slist.repaint(offset)
-		} else {
-			slist.repaint(1)
-		}
-	})
+	termui.Handle("/sys/kbd/C-n", moveNext)
+	termui.Handle("/sys/kbd/<down>", moveNext)
 	termui.Handle("/sys/kbd/j", func(termui.Event) {
 		if slist.InNormMode() {
 			slist.repaint(1)
@@ -199,24 +211,8 @@ func (slist *SelectList) handleKeyboardEvents() {
 			slist.appendQuery("j")
 		}
 	})
-	termui.Handle("/sys/kbd/C-p", func(termui.Event) {
-		if slist.InSearchMode() {
-			offset := slist.search.Prev()
-			slist.uilist.BorderLabel = slist.search.Title()
-			slist.repaint(offset)
-		} else {
-			slist.repaint(-1)
-		}
-	})
-	termui.Handle("/sys/kbd/<up>", func(termui.Event) {
-		if slist.InSearchMode() {
-			offset := slist.search.Prev()
-			slist.uilist.BorderLabel = slist.search.Title()
-			slist.repaint(offset)
-		} else {
-			slist.repaint(-1)
-		}
-	})
+	termui.Handle("/sys/kbd/C-p", movePrev)
+	termui.Handle("/sys/kbd/<up>", movePrev)
 	termui.Handle("/sys/kbd/k", func(termui.Event) {
 		if !slist.InSearchMode() {
 			slist.repaint(-1)
@@ -225,32 +221,15 @@ func (slist *SelectList) handleKeyboardEvents() {
 		}
 	})
 	// vim page down
-	termui.Handle("/sys/kbd/C-d", func(termui.Event) {
-		if !slist.InSearchMode() {
-			slist.repaint(10)
-		}
-	})
+	termui.Handle("/sys/kbd/C-d", pageDown)
 	// emacs page down
-	termui.Handle("/sys/kbd/C-v", func(termui.Event) {
-		if !slist.InSearchMode() {
-			slist.repaint(10)
-		}
-	})
+	termui.Handle("/sys/kbd/C-v", pageDown)
 	// vim page up
-	termui.Handle("/sys/kbd/C-u", func(termui.Event) {
-		if !slist.InSearchMode() {
-			slist.repaint(-10)
-		}
-	})
+	termui.Handle("/sys/kbd/C-u", pageUp)
 	// emacs page up
-	termui.Handle("/sys/kbd/√", func(termui.Event) {
-		if !slist.InSearchMode() {
-			slist.repaint(-10)
-		}
-	})
+	termui.Handle("/sys/kbd/√", pageUp)
 	termui.Handle("/sys/kbd/G", func(termui.Event) {
 		if !slist.InSearchMode() {
-			//slist.repaint(-slist.selectedIndex - 1)
 			slist.termWriter.Write([]byte("G"))
 		} else {
 			slist.appendQuery("G")
@@ -258,7 +237,6 @@ func (slist *SelectList) handleKeyboardEvents() {
 	})
 	termui.Handle("/sys/kbd/g", func(termui.Event) {
 		if !slist.InSearchMode() {
-			//			slist.repaint(-slist.selectedIndex)
 			slist.termWriter.Write([]byte("g"))
 		} else {
 			slist.appendQuery("g")
