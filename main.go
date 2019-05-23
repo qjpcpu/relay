@@ -221,7 +221,7 @@ func execCommand(cmdstr string) {
 	if lookErr != nil {
 		panic(lookErr)
 	}
-	args := []string{binary, "-c", "-i", cmdstr}
+	args := []string{binary, "-i", "-c", cmdstr}
 	env := os.Environ()
 	execErr := syscall.Exec(binary, args, env)
 	if execErr != nil {
