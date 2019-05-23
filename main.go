@@ -213,11 +213,15 @@ func loadCommands() []Cmd {
 
 // exec comand
 func execCommand(cmdstr string) {
-	binary, lookErr := exec.LookPath("bash")
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "bash"
+	}
+	binary, lookErr := exec.LookPath(shell)
 	if lookErr != nil {
 		panic(lookErr)
 	}
-	args := []string{"bash", "-c", cmdstr}
+	args := []string{binary, "-c", "-i", cmdstr}
 	env := os.Environ()
 	execErr := syscall.Exec(binary, args, env)
 	if execErr != nil {
