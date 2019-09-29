@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/hoisie/mustache"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/hoisie/mustache"
 )
 
 func (cmd *Cmd) Variables() []string {
@@ -48,6 +49,9 @@ func populateCommand(cmd *Cmd, datas ...map[string]string) map[string]string {
 	data := make(map[string]string)
 	reader := bufio.NewReader(os.Stdin)
 	for _, v := range variables {
+		if _, ok := data[v]; ok {
+			continue
+		}
 		if defaultVal := cmd.Defaults[v]; defaultVal != "" {
 			fmt.Printf("%s(%s): ", v, defaultVal)
 		} else {
