@@ -1,114 +1,188 @@
 package main
 
 import (
-	"github.com/mozillazg/go-pinyin"
+	"bytes"
 	"strings"
-	"unicode/utf8"
+	"unsafe"
+
+	gpy "github.com/mozillazg/go-pinyin"
 )
 
-func FuzzyContains(s string, substr string) bool {
-	if strings.Contains(s, substr) {
-		return true
-	}
-	idx, _ := PinyinContains(s, substr)
-	return idx >= 0
+func Contain(text string, keyword string) (substr string, index int) {
+	s := textToSentence(Args{StrictMatch: true}, text)
+	return s.find(keywordToBytes(keyword))
 }
 
-func FuzzyIndex(s string, substr string) (int, string) {
-	if idx := strings.Index(s, substr); idx >= 0 {
-		return idx, substr
-	}
-	idx, size := PinyinContains(s, substr)
-	if idx >= 0 {
-		return idx, s[idx : idx+size]
-	}
-	return -1, ""
+func FuzzyContain(text string, keyword string) (substr string, index int) {
+	s := textToSentence(Args{}, text)
+	return s.find(keywordToBytes(keyword))
 }
 
-func ToPinyin(raw string) (string, [][3]int) {
-	args := pinyin.NewArgs()
-	// [][3]int{转换后拼音字符串起始位置,转换后拼音长度,转换前字符数}
-	hanzi := make([][3]int, 0)
-	var text string
-	var idx int
-	for _, r := range raw {
-		py := pinyin.SinglePinyin(r, args)
-		if len(py) > 0 {
-			text += py[0]
-			hanzi = append(hanzi, [3]int{
-				idx,
-				len(py[0]),
-				utf8.RuneLen(r),
-			})
-			idx += len(py[0])
-		} else {
-			text += string(r)
-			idx += len(string(r))
-		}
-	}
-	return text, hanzi
+type word []byte
+type term struct {
+	offset    int
+	raw       []byte
+	isChinese bool
+	alias     []word
+}
+type sentence struct {
+	rawText string
+	terms   []*term
+	args    *Args
 }
 
-// PinyinContains return matched substr index and length
-func PinyinContains(raw string, term string) (int, int) {
-	py, words := ToPinyin(raw)
-	term, _ = ToPinyin(term)
-	if !strings.Contains(py, term) {
-		return -1, 0
+func (s *sentence) getRaw(t *term) string {
+	return s.rawText[t.offset : t.offset+len(t.raw)]
+}
+
+func (s *sentence) find(keyword []byte) (string, int) {
+	if len(keyword) == 0 || len(s.terms) == 0 {
+		return "", -1
 	}
-	py_bytes, term_bytes := []byte(py), []byte(term)
-	for {
-		idx := IndexBytes(py_bytes, term_bytes)
-		if idx < 0 {
-			break
-		}
-		valid := true
-		for _, w := range words {
-			if idx > w[0] && idx < w[0]+w[1] {
-				py_bytes[idx] = 0
-				valid = false
-				break
-			}
-		}
-		if valid {
-			end := idx + len(term)
-			for _, w := range words {
-				if end-1 >= w[0] && end <= w[0]+w[1] {
-					end = w[0] + w[1]
-					break
+	for i := 0; i < len(s.terms); i++ {
+		if termIdx := findKeyword(*s.args, s.terms, i, keyword); termIdx != -1 {
+			var ret string
+			for j := i; j <= termIdx; j++ {
+				ret += s.getRaw(s.terms[j])
+				if nextOffset := s.terms[j].offset + len(s.terms[j].raw); j < termIdx && nextOffset < s.terms[j+1].offset {
+					ret += s.rawText[nextOffset:s.terms[j+1].offset]
 				}
 			}
-			start_offset, end_offset := 0, 0
-			for _, w := range words {
-				if w[0] > end {
-					break
-				}
-				if idx > w[0] {
-					start_offset = start_offset + w[1] - w[2]
-					end_offset = end_offset + w[1] - w[2]
-				} else if w[0]+w[1] <= end {
-					end_offset = end_offset + w[1] - w[2]
-				}
-			}
-			return idx - start_offset, end - end_offset - (idx - start_offset)
+			return ret, s.terms[i].offset
 		}
 	}
-	return -1, 0
+	return "", -1
 }
 
-func IndexBytes(s []byte, term []byte) int {
-	// TODO: use something like kmp someday
-	for i := range s {
-		found := true
-		for j, tr := range term {
-			if s[i+j] != tr {
-				found = false
-				break
+type Args struct {
+	StrictMatch bool
+}
+
+func findKeyword(args Args, terms []*term, termIdx int, keyword []byte) int {
+	term := terms[termIdx]
+	for _, alias := range term.alias {
+		size := matchBytes(alias, keyword)
+		if size == 0 {
+			continue
+		} else if size < len(keyword) && size < len(alias) {
+			continue
+		} else if size == len(keyword) {
+			if size < len(alias) {
+				if !args.StrictMatch {
+					return termIdx
+				}
+			} else {
+				return termIdx
 			}
-		}
-		if found {
-			return i
+		} else if size == len(alias) {
+			if size < len(keyword) {
+				if termIdx+1 >= len(terms) {
+					continue
+				}
+				if idx := findKeyword(args, terms, termIdx+1, keyword[size:]); idx != -1 {
+					return idx
+				}
+			} else {
+				return termIdx
+			}
 		}
 	}
 	return -1
+}
+
+func keywordToBytes(keyword string) (data []byte) {
+	pargs := gpy.NewArgs()
+	runes := []rune(keyword)
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		py := gpy.SinglePinyin(r, pargs)
+		if len(py) > 0 {
+			data = append(data, ([]byte(py[0]))...)
+		} else {
+			if isCharOrNumber(r) {
+				data = append(data, runesToBytes([]rune{r})...)
+			}
+		}
+	}
+	return
+}
+
+func textToSentence(args Args, text string) *sentence {
+	var terms []*term
+	pargs := gpy.NewArgs()
+	pargs.Heteronym = true
+
+	runes := []rune(text)
+	for i := 0; i < len(runes); {
+		r := runes[i]
+		py := gpy.SinglePinyin(r, pargs)
+		if len(py) > 0 {
+			t := makePinyinTerm(r, py, args.StrictMatch)
+			t.offset = len(runesToBytes(runes[:i]))
+			terms = append(terms, t)
+			i++
+		} else {
+			if isCharOrNumber(r) {
+				j := i + 1
+				for ; j < len(runes) && isCharOrNumber(runes[j]); j++ {
+				}
+				data := []byte(strings.ToLower(string(runes[i:j])))
+				t := &term{
+					offset:    len(runesToBytes(runes[:i])),
+					raw:       data,
+					isChinese: false,
+					alias:     []word{data},
+				}
+				terms = append(terms, t)
+				i = j
+			} else {
+				i++
+			}
+		}
+	}
+	sen := &sentence{rawText: text, terms: terms, args: &args}
+	return sen
+}
+
+func isCharOrNumber(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
+}
+
+func runesToBytes(r []rune) []byte {
+	str := string(r)
+	return *((*[]byte)((unsafe.Pointer(&str))))
+}
+
+// 声母表
+var initialArray = strings.Split(
+	"b,p,m,f,d,t,n,l,g,k,h,j,q,x,r,zh,ch,sh,z,c,s",
+	",",
+)
+
+func makePinyinTerm(r rune, pinyins []string, isStrict bool) *term {
+	var words []word
+	for _, w := range pinyins {
+		data := []byte(strings.ToLower(w))
+		words = append(words, data)
+		if !isStrict {
+			for _, c := range initialArray {
+				cc := []byte(c)
+				if bytes.HasPrefix(data, cc) {
+					words = append(words, cc)
+				}
+			}
+		}
+	}
+	return &term{
+		raw:       runesToBytes([]rune{r}),
+		isChinese: true,
+		alias:     words,
+	}
+}
+
+func matchBytes(left, right []byte) (length int) {
+	for i := 0; i < len(left) && i < len(right) && left[i] == right[i]; i++ {
+		length++
+	}
+	return
 }

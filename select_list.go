@@ -121,7 +121,7 @@ func (sl *SelectList) doSearch() {
 	sl.search.SearchResultsIndices = []int{}
 	sl.search.SelectedResultIndex = 0
 	for i, c := range sl.items {
-		if FuzzyContains(strings.ToLower(c), strings.ToLower(sl.search.QueryStr)) {
+		if _, idx := FuzzyContain(strings.ToLower(c), strings.ToLower(sl.search.QueryStr)); idx >= 0 {
 			sl.search.SearchResultsIndices = append(sl.search.SearchResultsIndices, i)
 		}
 	}
@@ -337,8 +337,7 @@ func (sl *SelectList) Highlight(raw string, hint string, background bool) string
 	var result string
 	for loop := true; loop; loop = false {
 		// search mode
-		if sl.InSearchMode() && FuzzyContains(raw1, qs) {
-			start, matched := FuzzyIndex(raw1, qs)
+		if matched, start := FuzzyContain(raw1, qs); sl.InSearchMode() && start != -1 {
 			if start < 0 {
 				if background {
 					result = fmt.Sprintf("[%s](fg-blue,bg-green)", raw)
