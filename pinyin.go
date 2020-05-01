@@ -155,7 +155,7 @@ func runesToBytes(r []rune) []byte {
 
 // 声母表
 var initialArray = strings.Split(
-	"b,p,m,f,d,t,n,l,g,k,h,j,q,x,r,zh,ch,sh,z,c,s",
+	"b,p,m,f,d,t,n,l,g,k,h,j,q,x,r,zh,ch,sh,z,c,s,y,w",
 	",",
 )
 
