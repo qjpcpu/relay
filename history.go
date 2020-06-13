@@ -13,14 +13,20 @@ import (
 )
 
 type Cache struct {
-	History []Cmd
+	History       []Cmd
+	OptionHistory map[string]map[string][]string // cmd md5 : option name : option history values
 }
 
 // encrypt cache just keep direct tamper away, anyone run relay can still view the history
 var key = []byte("lootilcloocyrevasiyaleremeveileb")
 
-func loadCache() (c Cache, err error) {
-	data, err := ioutil.ReadFile(cacheFile)
+func shouldLoadCache(ctx *context) Cache {
+	c, _ := loadCache(ctx)
+	return c
+}
+
+func loadCache(ctx *context) (c Cache, err error) {
+	data, err := ioutil.ReadFile(ctx.getCacheFile())
 	if err != nil {
 		return c, err
 	}
@@ -34,7 +40,14 @@ func loadCache() (c Cache, err error) {
 	return
 }
 
-func (cache *Cache) AppendHistory(c Cmd) {
+func (cache *Cache) GetOptionHistory(c Cmd) map[string][]string {
+	if cache.OptionHistory == nil {
+		return nil
+	}
+	return cache.OptionHistory[c.md5()]
+}
+
+func (cache *Cache) AppendHistory(c Cmd, options map[string]string) {
 	index := -1
 	length := len(cache.History)
 	for i, cc := range cache.History {
@@ -53,9 +66,30 @@ func (cache *Cache) AppendHistory(c Cmd) {
 	} else if index == -1 {
 		cache.History = append(cache.History, c)
 	}
+
+	if len(options) == 0 {
+		return
+	}
+	if cache.OptionHistory == nil {
+		cache.OptionHistory = make(map[string]map[string][]string)
+	}
+	if cache.OptionHistory[c.md5()] == nil {
+		cache.OptionHistory[c.md5()] = make(map[string][]string)
+	}
+
+	m := cache.OptionHistory[c.md5()]
+	for k, v := range options {
+		m[k] = append(m[k], v)
+		m[k] = removeDupElem(m[k])
+		if size := len(m[k]); size > MaxOptionHistorySize {
+			m[k] = m[k][size-MaxOptionHistorySize:]
+		}
+	}
 }
 
-func saveCache(c Cache) {
+func saveCache(ctx *context, cmd Cmd, options map[string]string) {
+	c := shouldLoadCache(ctx)
+	c.AppendHistory(cmd, options)
 	// keep 200 history
 	hmax := 200
 	if l := len(c.History); l > hmax {
@@ -69,7 +103,7 @@ func saveCache(c Cache) {
 	if err != nil {
 		return
 	}
-	ioutil.WriteFile(cacheFile, data, 0644)
+	ioutil.WriteFile(ctx.getCacheFile(), data, 0644)
 }
 
 func encrypt(key, text []byte) ([]byte, error) {
