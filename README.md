@@ -8,7 +8,7 @@ relay
 ### Install
 
 ```
-go get -u github.com/qjpcpu/relay
+go get github.com/qjpcpu/relay
 ```
 
 or build from source
@@ -16,15 +16,6 @@ or build from source
 ```
 git clone git@github.com:qjpcpu/relay.git
 cd relay && go build
-```
-
-or download binary file
-
-```
-# for osx
-wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.darwin -O relay && chmod +x ./relay
-# for linux
-wget https://raw.githubusercontent.com/qjpcpu/relay/master/release/relay.linux -O relay && chmod +x ./relay
 ```
 
 ### Configuration
@@ -139,10 +130,12 @@ relay db
 ```
 -
  name: command with parameters
- cmd: echo 'hello {{name}}'
+ cmd: echo 'hello {{who}}'
  alias: hi
- defaults:
-  name: Jack
+ options:
+  who: 
+   - name: best friend
+     val: Andy
 ```
 
 ```
