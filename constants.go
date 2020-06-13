@@ -9,7 +9,7 @@ const (
 )
 
 const (
-	OptionName           = "name"
+	OptionDesc           = "desc"
 	OptionVal            = "val"
 	MaxOptionHistorySize = 5
 )

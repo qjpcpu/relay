@@ -20,7 +20,7 @@ import (
 )
 
 type OptionItem struct {
-	Name string `json:"name"`
+	Desc string `json:"desc"`
 	Val  string `json:"val"`
 }
 
@@ -72,8 +72,8 @@ func formatCommandList(commands []Cmd) []Cmd {
 						oi := OptionItem{}
 						for _, key := range vMap.MapKeys() {
 							k, v := fmt.Sprint(key.Interface()), fmt.Sprint(vMap.MapIndex(key).Interface())
-							if k == OptionName {
-								oi.Name = v
+							if k == OptionDesc {
+								oi.Desc = v
 							} else if k == OptionVal {
 								oi.Val = v
 							}
@@ -195,8 +195,8 @@ func completerWithDefault(key string, options []OptionItem, optValHis []string) 
 		for i, opt := range options {
 			if !isStrBlank(opt.Val) {
 				desc := PromptTypeDefault
-				if !isStrBlank(opt.Name) {
-					desc = opt.Name
+				if !isStrBlank(opt.Desc) {
+					desc = opt.Desc
 				}
 				suggestions = append(suggestions, prompt.Suggest{
 					Text:        options[i].Val,
