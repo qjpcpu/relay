@@ -207,6 +207,9 @@ func completerWithDefault(key string, options []OptionItem, optValHis []string) 
 
 		files, _ := ioutil.ReadDir(".")
 		for _, file := range files {
+			if strings.HasPrefix(file.Name(), ".") {
+				continue
+			}
 			suggestions = append(suggestions, prompt.Suggest{
 				Text:        file.Name(),
 				Description: fileDesc(file),
