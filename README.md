@@ -143,3 +143,12 @@ relay hi Jason
 # or interactively
 relay hi
 ```
+
+##### 5.confirm command before execution
+
+```
+-
+ name: command with confirm
+ cmd: echo DANGER
+ confirm: true
+```

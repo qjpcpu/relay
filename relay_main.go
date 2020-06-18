@@ -23,6 +23,8 @@ func runRelayCommand(c *context) (err error) {
 	// cache the comand as lastest command
 	saveCache(c, selectedCmd, finalOptions)
 
+	confirmComand(c, &selectedCmd)
+
 	// run the command selected
 	execCommand(c, selectedCmd.RealCommand)
 

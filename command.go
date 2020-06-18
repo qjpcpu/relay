@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/md5"
 	"errors"
 	"fmt"
@@ -15,8 +16,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/qjpcpu/go-prompt"
 	"github.com/hoisie/mustache"
+	"github.com/qjpcpu/go-prompt"
 )
 
 type OptionItem struct {
@@ -33,8 +34,9 @@ type Cmd struct {
 	// command shortcut, fast access
 	Alias string `yaml:"alias"`
 	// values
-	Options    map[string][]OptionItem `yaml:"-"`
-	OptionsRaw map[string]interface{}  `yaml:"options" json:"-"`
+	Options     map[string][]OptionItem `yaml:"-"`
+	OptionsRaw  map[string]interface{}  `yaml:"options" json:"-"`
+	NeedConfirm bool                    `yaml:"confirm"`
 	// real command
 	RealCommand string
 }
@@ -104,6 +106,13 @@ func findCommandByAlias(ctx *context, commands []Cmd) (index int, ok bool) {
 		}
 	}
 	return
+}
+
+func confirmComand(ctx *context, cmd *Cmd) {
+	if cmd.NeedConfirm {
+		fmt.Println("Press Enter to continue...")
+		bufio.NewReader(os.Stdin).ReadBytes('\n')
+	}
 }
 
 // exec comand
