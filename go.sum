@@ -32,6 +32,8 @@ github.com/qjpcpu/go-prompt v0.2.3 h1:KgFVMGz+Vt/Uqm0LoQNgHAEQw0bsJauKcRgbrNb4Zu
 github.com/qjpcpu/go-prompt v0.2.3/go.mod h1:8diCHvPLDeuNvS1hWnaXqS3i/QOJRlc1ZTVL6Zj0GNE=
 github.com/qjpcpu/go-prompt v0.2.4 h1:4tFSgwY40dWE0bw1sYngNE1KBmCZzaSjLUtGw99ARAs=
 github.com/qjpcpu/go-prompt v0.2.4/go.mod h1:OI2gWx6CO4Bnsws74DlNJwinVApDGm19ypfMpKTgzaU=
+github.com/qjpcpu/go-prompt v0.2.5 h1:M/+ECyHwHk7mBnWvlKhAxpjuE8nrtiEqiwy6ntdYx94=
+github.com/qjpcpu/go-prompt v0.2.5/go.mod h1:4F+7+i77kxph6pMXyPjM/IIXDb7Q/GuGMrf9QCqOuKE=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/shurcooL/sanitized_anchor_name v1.0.0/go.mod h1:1NzhyTcUVG4SuEtjjoZeVRXNmyL/1OwPU0+IJeTBvfc=
 github.com/urfave/cli v1.22.4 h1:u7tSpNPPswAFymm8IehJhy4uJMlUuU/GmqSkvJ1InXA=

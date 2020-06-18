@@ -12,9 +12,7 @@ require (
 	github.com/mozillazg/go-pinyin v0.17.0
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1 // indirect
 	github.com/pkg/term v0.0.0-20200520122047-c3ffed290a03 // indirect
-	github.com/qjpcpu/go-prompt v0.2.3
+	github.com/qjpcpu/go-prompt v0.2.5
 	github.com/urfave/cli v1.22.4
 	gopkg.in/yaml.v2 v2.3.0
 )
-
-replace github.com/c-bata/go-prompt v0.2.3 => github.com/qjpcpu/go-prompt v0.2.4

@@ -15,7 +15,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/c-bata/go-prompt"
+	"github.com/qjpcpu/go-prompt"
 	"github.com/hoisie/mustache"
 )
 
