@@ -14,10 +14,10 @@ import (
 	"regexp"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/hoisie/mustache"
-	"github.com/qjpcpu/go-prompt"
+	"github.com/qjpcpu/common.v2/cli"
+	"github.com/qjpcpu/common.v2/stringutil"
+	"gopkg.in/yaml.v2"
 )
 
 type OptionItem struct {
@@ -96,7 +96,7 @@ func formatCommandList(commands []Cmd) []Cmd {
 func findCommandByAlias(ctx *context, commands []Cmd) (index int, ok bool) {
 	alias := ctx.getAlias()
 	// relay alias: run the command searched by alias
-	if !isStrBlank(alias) && alias != "!" && alias != "@" {
+	if !stringutil.IsBlankStr(alias) && alias != "!" && alias != "@" {
 		for i, cmd := range commands {
 			if cmd.Alias == alias {
 				ok = true
@@ -195,88 +195,46 @@ func (cmd *Cmd) Populate(data map[string]string) {
 	cmd.RealCommand = tmpl.Render(data)
 }
 
-func completerWithDefault(key string, options []OptionItem, optValHis []string) func(prompt.Document) []prompt.Suggest {
-	return func(d prompt.Document) []prompt.Suggest {
-		var suggestions []prompt.Suggest
-
-		optValHis = removeDupElem(optValHis)
-
-		for i, opt := range options {
-			if !isStrBlank(opt.Val) {
-				desc := PromptTypeDefault
-				if !isStrBlank(opt.Desc) {
-					desc = opt.Desc
-				}
-				suggestions = append(suggestions, prompt.Suggest{
-					Text:        options[i].Val,
-					Description: desc,
-				})
-			}
-		}
-
-		files, _ := ioutil.ReadDir(".")
-		for _, file := range files {
-			if strings.HasPrefix(file.Name(), ".") {
-				continue
-			}
-			suggestions = append(suggestions, prompt.Suggest{
-				Text:        file.Name(),
-				Description: fileDesc(file),
-			})
-		}
-
-		/* insert history */
-		for i := 0; i < len(optValHis); i++ {
-			val := optValHis[i]
-			idx := -1
-			for j, sg := range suggestions {
-				if sg.Text == val {
-					idx = j
-					break
-				}
-			}
-			if idx == -1 {
-				suggestions = append([]prompt.Suggest{{
-					Text:        val,
-					Description: PromptTypeHistory,
-				}}, suggestions...)
-			} else if idx > 0 {
-				tmp := suggestions[idx]
-				for j := idx; j > 0; j-- {
-					suggestions[j] = suggestions[j-1]
-				}
-				suggestions[0] = tmp
-			}
-		}
-
-		return prompt.FilterContains(suggestions, d.GetWordBeforeCursor(), true)
-	}
-}
-
-func populateCommand(cmd *Cmd, optHis map[string][]string) (params map[string]string, err error) {
-	params = make(map[string]string)
+func populateCommand(cmd *Cmd) (err error) {
+	params := make(map[string]string)
 	variables := cmd.Variables()
 	if len(variables) == 0 {
 		return
 	}
-	if optHis == nil {
-		optHis = make(map[string][]string)
-	}
+
 	for _, v := range variables {
 		if _, ok := params[v]; ok {
 			continue
 		}
-		header := fmt.Sprintf("%s %s ", v, ParamInputHintSymbol)
-		text, shouldExit := prompt.Input(
+		header := fmt.Sprintf("%s %s", v, ParamInputHintSymbol)
+		text, shouldExit := cli.InterruptableInput(
 			header,
-			completerWithDefault(v, cmd.Options[v], optHis[v]),
-			prompt.OptionPrefixTextColor(prompt.Blue),
+			cli.WithRecentName(cmd.Cmd),
+			cli.WithHint(),
+			cli.WithCurrentFiles(),
+			cli.WithSuggestions(optionItemToSuggestions(cmd.Options[v])),
 		)
 		if shouldExit {
-			return params, dummyErr
+			return dummyErr
 		}
 		params[v] = strings.TrimSpace(text)
 	}
 	cmd.Populate(params)
+	return
+}
+
+func optionItemToSuggestions(options []OptionItem) (suggestions []cli.Suggest) {
+	for i, opt := range options {
+		if !stringutil.IsBlankStr(opt.Val) {
+			desc := PromptTypeDefault
+			if !stringutil.IsBlankStr(opt.Desc) {
+				desc = opt.Desc
+			}
+			suggestions = append(suggestions, cli.Suggest{
+				Text: options[i].Val,
+				Desc: desc,
+			})
+		}
+	}
 	return
 }

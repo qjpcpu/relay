@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/qjpcpu/common.v2/stringutil"
 	"github.com/urfave/cli"
 )
 
@@ -14,15 +15,11 @@ func newContext(c *cli.Context) *context {
 	return &context{Context: c}
 }
 func (ctx *context) getConfigFile() string {
-	if f := ctx.GlobalString("c"); isStrBlank(f) {
+	if f := ctx.GlobalString("c"); stringutil.IsBlankStr(f) {
 		return os.Getenv("HOME") + "/.relay.conf"
 	} else {
 		return f
 	}
-}
-
-func (ctx *context) getCacheFile() string {
-	return os.Getenv("HOME") + "/.relay_cache"
 }
 
 func (ctx *context) getAlias() string {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/qjpcpu/common.v2/cli"
 )
 
 func runRelayCommand(c *context) (err error) {
@@ -15,13 +17,12 @@ func runRelayCommand(c *context) (err error) {
 		return nil
 	}
 
-	finalOptions, err := populateCommandWithCache(c, &selectedCmd)
-	if err != nil {
+	if err = populateCommandWithCache(c, &selectedCmd); err != nil {
 		return err
 	}
 
 	// cache the comand as lastest command
-	saveCache(c, selectedCmd, finalOptions)
+	saveCache(c, selectedCmd)
 
 	confirmComand(c, &selectedCmd)
 
@@ -34,7 +35,7 @@ func runRelayCommand(c *context) (err error) {
 func selectCommand(ctx *context, commands []Cmd) (cmd Cmd, selected bool) {
 	currentIndex, shortcut := findCommandByAlias(ctx, commands)
 
-	menu := NewSelectListWithHints(currentIndex, commands2Items(commands), commands2Hints(commands))
+	menu := cli.NewComplexSelectWithHints(currentIndex, commands2Items(commands), commands2Hints(commands))
 
 	// if no shortcut specify, show selection UI
 	if !shortcut {
@@ -47,17 +48,14 @@ func selectCommand(ctx *context, commands []Cmd) (cmd Cmd, selected bool) {
 	return
 }
 
-func populateCommandWithCache(ctx *context, cmd *Cmd) (finalOptions map[string]string, err error) {
-	cache := shouldLoadCache(ctx)
-
+func populateCommandWithCache(ctx *context, cmd *Cmd) (err error) {
 	// populate command variables if exists
 	if vlen := len(cmd.Variables()); vlen == 0 {
 		fmt.Printf("\033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", cmd.Name, cmd.RealCommand)
 	} else {
 		fmt.Printf("Fill command \033[1;33m%s\033[0m:\n", cmd.Name)
-		optHistory := cache.GetOptionHistory(*cmd)
-		if finalOptions, err = populateCommand(cmd, optHistory); err != nil {
-			return nil, err
+		if err = populateCommand(cmd); err != nil {
+			return err
 		}
 		fmt.Printf("\033[0;32m%s\033[0m\n", cmd.RealCommand)
 	}
@@ -65,10 +63,8 @@ func populateCommandWithCache(ctx *context, cmd *Cmd) (finalOptions map[string]s
 }
 
 func runLastCommand(c *context) error {
-	cache := shouldLoadCache(c)
-	if len(cache.History) > 0 {
-		cmd := cache.History[len(cache.History)-1]
-		saveCache(c, cmd, nil)
+	if cmd := loadLatestCmd(c); cmd != nil {
+		saveCache(c, *cmd)
 		fmt.Printf("\033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", cmd.Name, cmd.RealCommand)
 		execCommand(c, cmd.RealCommand)
 	} else {
@@ -78,18 +74,18 @@ func runLastCommand(c *context) error {
 }
 
 func runHistoryCommand(c *context) error {
-	cache := shouldLoadCache(c)
-	if len(cache.History) == 0 {
+	commandList := loadCache(c)
+	if len(commandList) == 0 {
 		fmt.Println("no history for now")
 		return nil
 	}
-	history := make([]string, len(cache.History))
-	historyNames := make([]string, len(cache.History))
-	for i, c := range cache.History {
-		history[len(cache.History)-i-1] = c.RealCommand
-		historyNames[len(cache.History)-i-1] = c.Name + ": " + c.RealCommand
+	history := make([]string, len(commandList))
+	historyNames := make([]string, len(commandList))
+	for i, c := range commandList {
+		history[i] = c.RealCommand
+		historyNames[i] = c.Name + ": " + c.RealCommand
 	}
-	selects := NewSelectList(0, historyNames)
+	selects := cli.NewComplexSelect(0, historyNames)
 	selects.Show()
 	if !selects.IsSelectNothing() {
 		execCommand(c, history[selects.Selected()])

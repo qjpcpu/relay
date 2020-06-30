@@ -2,14 +2,11 @@ package main
 
 const (
 	ParamInputHintSymbol = ">"
-	PromptTypeFile       = "FILE   "
-	PromptTypeDir        = "DIR    "
-	PromptTypeDefault    = "DEFAULT"
-	PromptTypeHistory    = "HISTORY"
+
+	PromptTypeDefault = "DEFAULT"
 )
 
 const (
-	OptionDesc           = "desc"
-	OptionVal            = "val"
-	MaxOptionHistorySize = 5
+	OptionDesc = "desc"
+	OptionVal  = "val"
 )
