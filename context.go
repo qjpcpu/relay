@@ -9,6 +9,7 @@ import (
 
 type context struct {
 	*cli.Context
+	isAlias bool
 }
 
 func newContext(c *cli.Context) *context {
@@ -24,4 +25,16 @@ func (ctx *context) getConfigFile() string {
 
 func (ctx *context) getAlias() string {
 	return ctx.Args().Get(0)
+}
+
+func (ctx *context) MarkAlias() {
+	ctx.isAlias = true
+}
+
+func (ctx *context) ExtraArguments() []string {
+	arguments := ctx.Args()
+	if len(arguments) > 1 && ctx.isAlias {
+		return arguments[1:]
+	}
+	return nil
 }

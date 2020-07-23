@@ -99,6 +99,7 @@ func findCommandByAlias(ctx *context, commands []Cmd) (index int, ok bool) {
 	if !stringutil.IsBlankStr(alias) && alias != "!" && alias != "@" {
 		for i, cmd := range commands {
 			if cmd.Alias == alias {
+				ctx.MarkAlias()
 				ok = true
 				index = i
 				return
@@ -195,15 +196,20 @@ func (cmd *Cmd) Populate(data map[string]string) {
 	cmd.RealCommand = tmpl.Render(data)
 }
 
-func populateCommand(cmd *Cmd) (err error) {
+func populateCommand(ctx *context, cmd *Cmd) (err error) {
 	params := make(map[string]string)
 	variables := cmd.Variables()
 	if len(variables) == 0 {
 		return
 	}
 
-	for _, v := range variables {
+	prefillArguments := ctx.ExtraArguments()
+	for i, v := range variables {
 		if _, ok := params[v]; ok {
+			continue
+		}
+		if i < len(prefillArguments) {
+			params[v] = prefillArguments[i]
 			continue
 		}
 		header := fmt.Sprintf("%s %s", v, ParamInputHintSymbol)

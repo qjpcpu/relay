@@ -54,7 +54,7 @@ func populateCommandWithCache(ctx *context, cmd *Cmd) (err error) {
 		fmt.Printf("\033[1;33m%s\033[0m\n\033[0;32m%s\033[0m\n", cmd.Name, cmd.RealCommand)
 	} else {
 		fmt.Printf("Fill command \033[1;33m%s\033[0m:\n", cmd.Name)
-		if err = populateCommand(cmd); err != nil {
+		if err = populateCommand(ctx, cmd); err != nil {
 			return err
 		}
 		fmt.Printf("\033[0;32m%s\033[0m\n", cmd.RealCommand)
