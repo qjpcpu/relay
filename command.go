@@ -215,7 +215,7 @@ func populateCommand(ctx *context, cmd *Cmd) (err error) {
 		header := fmt.Sprintf("%s %s", v, ParamInputHintSymbol)
 		text, shouldExit := cli.InterruptableInput(
 			header,
-			cli.WithRecentName(cmd.Cmd),
+			cli.WithRecentName(cmd.Cmd+v),
 			cli.WithHint(),
 			cli.WithCurrentFiles(),
 			cli.WithSuggestions(optionItemToSuggestions(cmd.Options[v])),
