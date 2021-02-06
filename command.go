@@ -217,7 +217,7 @@ func populateCommand(ctx *context, cmd *Cmd) (err error) {
 			header,
 			cli.WithRecentName(cmd.Cmd+v),
 			cli.WithHint(),
-			cli.WithCurrentFiles(),
+			cli.WithFileBrowser(),
 			cli.WithSuggestions(optionItemToSuggestions(cmd.Options[v])),
 		)
 		if shouldExit {

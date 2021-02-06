@@ -33,8 +33,13 @@ func (ctx *context) MarkAlias() {
 
 func (ctx *context) ExtraArguments() []string {
 	arguments := ctx.Args()
-	if len(arguments) > 1 && ctx.isAlias {
-		return arguments[1:]
+	if ctx.isAlias {
+		if len(arguments) > 1 {
+			return arguments[1:]
+		}
+	} else {
+		return arguments
 	}
+
 	return nil
 }
