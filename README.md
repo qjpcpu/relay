@@ -138,12 +138,24 @@ relay db
      val: Andy
 ```
 
+or 
+
+```
+-
+ name: command with parameters
+ cmd: echo 'hello {{who}}'
+ alias: hi
+ defaults:
+  who: DANGER
+```
+
 ```
 relay hi Jason
 # or interactively
 relay hi
 ```
 
+or
 ##### 5.confirm command before execution
 
 ```

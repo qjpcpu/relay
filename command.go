@@ -37,6 +37,7 @@ type Cmd struct {
 	Options     map[string][]OptionItem `yaml:"-"`
 	OptionsRaw  map[string]interface{}  `yaml:"options" json:"-"`
 	NeedConfirm bool                    `yaml:"confirm"`
+	Defaults    map[string]string       `yaml:"defaults"`
 	// real command
 	RealCommand string
 }
@@ -210,6 +211,10 @@ func populateCommand(ctx *context, cmd *Cmd) (err error) {
 		}
 		if i < len(prefillArguments) {
 			params[v] = prefillArguments[i]
+			continue
+		}
+		if cmd.Defaults != nil && cmd.Defaults[v] != "" {
+			params[v] = cmd.Defaults[v]
 			continue
 		}
 		header := fmt.Sprintf("%s %s", v, ParamInputHintSymbol)
