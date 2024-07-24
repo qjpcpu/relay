@@ -134,7 +134,7 @@ relay db
  alias: hi
  options:
   who: 
-   - name: best friend
+   - desc: best friend
      val: Andy
 ```
 
