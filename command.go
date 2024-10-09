@@ -217,18 +217,16 @@ func populateCommand(ctx *context, cmd *Cmd) (err error) {
 			params[v] = cmd.Defaults[v]
 			continue
 		}
-		header := fmt.Sprintf("%s %s", v, ParamInputHintSymbol)
-		text, shouldExit := cli.InterruptableInput(
-			header,
-			cli.WithRecentName(cmd.Cmd+v),
-			cli.WithHint(),
-			cli.WithFileBrowser(),
-			cli.WithSuggestions(optionItemToSuggestions(cmd.Options[v])),
-		)
-		if shouldExit {
+		var items, hints []string
+		for _, value := range cmd.Options[v] {
+			items = append(items, value.Val)
+			hints = append(hints, fmt.Sprintf("%s/%s", value.Desc, value.Val))
+		}
+		idx := cli.SelectWithSearch(v, hints)
+		if idx < 0 {
 			return dummyErr
 		}
-		params[v] = strings.TrimSpace(text)
+		params[v] = strings.TrimSpace(items[idx])
 	}
 	cmd.Populate(params)
 	return
