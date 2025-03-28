@@ -16,7 +16,6 @@ import (
 
 	"github.com/hoisie/mustache"
 	"github.com/qjpcpu/common.v2/cli"
-	"github.com/qjpcpu/common.v2/stringutil"
 	"gopkg.in/yaml.v2"
 )
 
@@ -97,7 +96,7 @@ func formatCommandList(commands []Cmd) []Cmd {
 func findCommandByAlias(ctx *context, commands []Cmd) (index int, ok bool) {
 	alias := ctx.getAlias()
 	// relay alias: run the command searched by alias
-	if !stringutil.IsBlankStr(alias) && alias != "!" && alias != "@" {
+	if !IsBlankStr(alias) && alias != "!" && alias != "@" {
 		for i, cmd := range commands {
 			if cmd.Alias == alias {
 				ctx.MarkAlias()
@@ -234,9 +233,9 @@ func populateCommand(ctx *context, cmd *Cmd) (err error) {
 
 func optionItemToSuggestions(options []OptionItem) (suggestions []cli.Suggest) {
 	for i, opt := range options {
-		if !stringutil.IsBlankStr(opt.Val) {
+		if !IsBlankStr(opt.Val) {
 			desc := PromptTypeDefault
-			if !stringutil.IsBlankStr(opt.Desc) {
+			if !IsBlankStr(opt.Desc) {
 				desc = opt.Desc
 			}
 			suggestions = append(suggestions, cli.Suggest{
