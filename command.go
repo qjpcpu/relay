@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"syscall"
 
@@ -127,11 +128,29 @@ func execCommand(ctx *context, cmdstr string) {
 		panic(lookErr)
 	}
 	args := []string{binary, "-i", "-c", cmdstr}
-	env := os.Environ()
-	execErr := syscall.Exec(binary, args, env)
+	execErr := syscall.Exec(binary, args, getEnv())
 	if execErr != nil {
 		panic(execErr)
 	}
+}
+
+func getEnv() []string {
+	env := os.Environ()
+	var relayDir string
+	if exe, err := os.Executable(); err != nil {
+		return env
+	} else if dir, err := filepath.Abs(filepath.Dir(exe)); err != nil {
+		return env
+	} else {
+		relayDir = dir
+	}
+	for i, pair := range env {
+		if strings.HasPrefix(pair, "PATH=") && !strings.Contains(pair, relayDir) {
+			env[i] = pair + ":" + relayDir
+			break
+		}
+	}
+	return env
 }
 
 func (c Cmd) GetName() string {
