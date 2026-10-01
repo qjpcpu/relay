@@ -12,7 +12,10 @@ func runRelayCommand(c *context) (err error) {
 		return err
 	}
 
-	selectedCmd, ok := selectCommand(c, commands)
+	selectedCmd, ok, err := selectCommand(c, commands)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return nil
 	}
@@ -32,14 +35,16 @@ func runRelayCommand(c *context) (err error) {
 	return nil
 }
 
-func selectCommand(ctx *context, commands []Cmd) (cmd Cmd, selected bool) {
+func selectCommand(ctx *context, commands []Cmd) (cmd Cmd, selected bool, err error) {
 	currentIndex, shortcut := findCommandByAlias(ctx, commands)
 
 	menu := cli.NewComplexSelectWithHints(currentIndex, commands2Items(commands), commands2Hints(commands))
 
 	// if no shortcut specify, show selection UI
 	if !shortcut {
-		menu.Show()
+		if err = showMenu(menu.Show); err != nil {
+			return
+		}
 	}
 	if !menu.IsSelectNothing() {
 		cmd = commands[menu.Selected()]
@@ -86,7 +91,9 @@ func runHistoryCommand(c *context) error {
 		historyNames[i] = c.Name + ": " + c.RealCommand
 	}
 	selects := cli.NewComplexSelect(0, historyNames)
-	selects.Show()
+	if err := showMenu(selects.Show); err != nil {
+		return err
+	}
 	if !selects.IsSelectNothing() {
 		execCommand(c, history[selects.Selected()])
 	}
